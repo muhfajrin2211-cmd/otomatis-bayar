@@ -1784,6 +1784,35 @@
                 regAllocationMap.set(r.transactionId, ranks);
             });
 
+            // Otomatis deteksi & tandai FULL jika ada sesi yang mencapai kuota (>=15 tanpa C2 atau >=30 dengan C2)
+            let autoFullUpdated = false;
+            Object.keys(sessionLunasCounts).forEach(sKey => {
+                const count = sessionLunasCounts[sKey] || 0;
+                const currentLinkC2 = currentGroupLinks[`${sKey}_c2`];
+                const hasC2 = activeC2Keys.has(sKey) || !!currentLinkC2;
+                const maxCap = hasC2 ? 30 : 15;
+
+                if (count >= maxCap) {
+                    const parts = sKey.split('_');
+                    if (parts.length >= 3) {
+                        const time = `${parts[0]}.${parts[1]}`;
+                        const type = parts[2];
+                        if (!currentFull.some(f => f.time === time && f.type === type)) {
+                            currentFull.push({ time, type });
+                            autoFullUpdated = true;
+                        }
+                    }
+                }
+            });
+
+            if (autoFullUpdated) {
+                renderSessionGrid();
+                updateStats();
+                if (rtdb) {
+                    rtdb.ref('scrim_sessions/full').set(currentFull).catch(e => console.warn('Auto sync full error:', e));
+                }
+            }
+
             let countAll = cachedRegistrations.length;
             let countLunas = 0;
             let countPending = 0;
