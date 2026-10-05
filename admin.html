@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Console — Papih Gaming Scrim</title>
+    <meta name="description" content="Panel administrasi Papih Gaming Scrim: kelola sesi, link grup WhatsApp, dan monitor pembayaran secara realtime.">
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <!-- Fonts: Inter (UI) + JetBrains Mono (angka & kode) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <style>
+        /* ==================== DESIGN TOKENS (Sinkron dengan index.html) ==================== */
+        :root {
+            --bg: #0a0a14;
+            --surface: #12122a;
+            --surface-2: #1a1a3e;
+            --surface-3: #222255;
+            --border: #2a2a5a;
+            --border-strong: #3a3a78;
+            --text: #ffffff;
+            --text-2: #b0b0d0;
+            --text-3: #8888aa;
+            --brand: #ff4444;
+            --brand-soft: rgba(255, 68, 68, 0.15);
+            --primary: #4d7cff;
+            --primary-soft: rgba(77, 124, 255, 0.15);
+            --success: #00f076;
+            --success-text: #00f076;
+            --success-soft: rgba(0, 240, 118, 0.15);
+            --warning: #ffd700;
+            --warning-text: #ffd700;
+            --warning-soft: rgba(255, 215, 0, 0.15);
+            --danger: #ff5252;
+            --danger-text: #ff5252;
+            --danger-soft: rgba(255, 82, 82, 0.15);
+            --whatsapp: #25d366;
+            --radius-lg: 14px;
+            --radius: 8px;
+            --radius-sm: 6px;
+            --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+            --shadow-glow: 0 0 35px rgba(255, 68, 68, 0.25);
+            --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+            --sidebar-w: 248px;
+            --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+            --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+        body {
+            font-family: var(--font);
+            font-size: 14px;
+            line-height: 1.5;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse at 10% 20%, rgba(255, 68, 68, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 90% 80%, rgba(77, 124, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(255, 215, 0, 0.03) 0%, transparent 70%);
+            background-attachment: fixed;
+            font-feature-settings: 'cv11', 'ss01';
+        }
+
+        .container { width: 100%; }
+
+        .ic {
+            width: 18px; height: 18px;
+            stroke: currentColor; fill: none;
+            stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+        .ic-sm { width: 15px; height: 15px; }
+        .mono { font-family: var(--mono); font-feature-settings: normal; }
+
+        /* ==================== LOGIN ==================== */
+        .login-card {
+            max-width: 400px;
+            margin: 10vh auto 40px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 36px 32px 28px;
+            box-shadow: var(--shadow);
+            animation: fadeUp 0.5s var(--ease);
+        }
+        .login-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+        .panel-logo {
+            width: 44px; height: 44px; border-radius: 10px; object-fit: cover;
+            border: 1px solid var(--border-strong);
+        }
+        .login-title { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+        .login-subtitle { font-size: 0.82rem; color: var(--text-3); }
+        .login-heading { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+        .login-desc { font-size: 0.875rem; color: var(--text-2); margin-bottom: 24px; }
+
+        .input-group { margin-bottom: 16px; }
+        .input-group label {
+            display: block; font-size: 0.8rem; font-weight: 500;
+            color: var(--text-2); margin-bottom: 6px;
+        }
+        .admin-input {
+            width: 100%; height: 40px; padding: 0 12px;
+            background: var(--bg); border: 1px solid var(--border-strong);
+            border-radius: var(--radius); color: var(--text);
+            font: inherit; font-size: 0.9rem; outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .admin-input::placeholder { color: var(--text-3); }
+        .admin-input:focus { border-color: var(--brand); box-shadow: 0 0 16px rgba(255, 68, 68, 0.25); }
+
+        .btn-submit {
+            width: 100%; height: 42px; margin-top: 8px;
+            background: linear-gradient(135deg, var(--brand) 0%, #d92228 100%);
+            color: #ffffff;
+            border: none; border-radius: var(--radius);
+            font: inherit; font-size: 0.92rem; font-weight: 700;
+            cursor: pointer; transition: opacity 0.15s, transform 0.15s, box-shadow 0.2s;
+            box-shadow: 0 4px 18px rgba(255, 68, 68, 0.35);
+        }
+        .btn-submit:hover:not(:disabled) { opacity: 0.95; box-shadow: 0 6px 24px rgba(255, 68, 68, 0.5); transform: translateY(-1px); }
+        .btn-submit:active:not(:disabled) { transform: scale(0.99); }
+        .btn-submit:disabled { opacity: 0.6; cursor: wait; }
+
+        .alert-box {
+            display: none; background: var(--danger-soft); border: 1px solid rgba(255, 82, 82, 0.35);
+            color: var(--danger-text); padding: 10px 12px; border-radius: var(--radius);
+            font-size: 0.82rem; margin-bottom: 16px;
+        }
+        .alert-box.show { display: block; animation: shake 0.3s ease; }
+
+        .login-footer {
+            margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border);
+            text-align: center;
+        }
+        .login-footer a { color: var(--text-3); font-size: 0.82rem; text-decoration: none; transition: color 0.15s; }
+        .login-footer a:hover { color: var(--brand); }
+
+        /* ==================== APP SHELL ==================== */
+        .dashboard-wrapper { display: none; }
+        .app-shell {
+            display: grid;
+            grid-template-columns: var(--sidebar-w) 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: sticky; top: 0; height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            padding: 18px 14px;
+            animation: fadeIn 0.4s var(--ease);
+        }
+        .sb-brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 18px; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+        .dash-mini-logo { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border-strong); }
+        .sb-brand-name { font-weight: 700; font-size: 0.92rem; letter-spacing: -0.01em; line-height: 1.2; }
+        .sb-brand-sub { font-size: 0.72rem; color: var(--text-3); }
+
+        .sb-label {
+            font-size: 0.7rem; font-weight: 600; color: var(--text-3);
+            text-transform: uppercase; letter-spacing: 0.06em;
+            padding: 6px 10px 8px;
+        }
+        .admin-tab-nav { display: flex; flex-direction: column; gap: 2px; }
+        .tab-btn {
+            position: relative;
+            display: flex; align-items: center; gap: 10px;
+            width: 100%; height: 36px; padding: 0 10px;
+            background: transparent; border: none; border-radius: var(--radius);
+            color: var(--text-2); font: inherit; font-size: 0.875rem; font-weight: 500;
+            text-align: left; cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .tab-btn:hover { background: var(--surface-2); color: var(--text); }
+        .tab-btn.active { background: var(--surface-3); color: var(--text); }
+        .tab-btn.active::before {
+            content: ''; position: absolute; left: -14px; top: 8px; bottom: 8px;
+            width: 3px; border-radius: 0 3px 3px 0; background: var(--brand);
+            animation: growY 0.25s var(--ease);
+        }
+        .tab-btn .ic { color: var(--text-3); transition: color 0.15s; }
+        .tab-btn:hover .ic, .tab-btn.active .ic { color: var(--text); }
+        .tab-btn .nav-badge {
+            margin-left: auto; font-size: 0.68rem; font-weight: 600;
+            padding: 1px 6px; border-radius: 4px;
+            background: var(--success-soft); color: var(--success-text);
+        }
+
+        .sb-spacer { flex: 1; }
+        .sb-link {
+            display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px;
+            color: var(--text-2); text-decoration: none; font-size: 0.875rem; font-weight: 500;
+            border-radius: var(--radius); transition: background 0.15s, color 0.15s;
+        }
+        .sb-link:hover { background: var(--surface-2); color: var(--text); }
+
+        .sb-user {
+            display: flex; align-items: center; gap: 10px;
+            margin-top: 10px; padding: 10px; border: 1px solid var(--border);
+            border-radius: var(--radius-lg); background: var(--bg);
+        }
+        .sb-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: linear-gradient(135deg, #2a3142, #1b202b);
+            border: 1px solid var(--border-strong);
+            display: grid; place-items: center; color: var(--text-2); flex-shrink: 0;
+        }
+        .sb-user-info { min-width: 0; flex: 1; }
+        .sb-user-email { font-size: 0.8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-status { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--text-3); }
+        .online-dot {
+            width: 7px; height: 7px; border-radius: 50%; background: var(--success);
+            box-shadow: 0 0 0 0 rgba(48, 164, 108, 0.6);
+            animation: pulse 2.2s infinite;
+        }
+        .btn-logout {
+            display: grid; place-items: center; width: 30px; height: 30px;
+            background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm);
+            color: var(--text-3); cursor: pointer; transition: all 0.15s;
+        }
+        .btn-logout:hover { color: var(--danger-text); background: var(--danger-soft); border-color: rgba(255, 82, 82, 0.4); }
+
+        /* Main */
+        .main { min-width: 0; display: flex; flex-direction: column; }
+        .topbar {
+            position: sticky; top: 0; z-index: 50;
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            height: 64px; padding: 0 32px;
+            background: rgba(10, 10, 20, 0.85);
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border);
+        }
+        .crumbs { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-3); }
+        .crumbs strong { color: var(--text); font-weight: 600; }
+        .topbar-actions { display: flex; align-items: center; gap: 10px; }
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px;
+            border: 1px solid var(--border); border-radius: 999px;
+            font-size: 0.76rem; color: var(--text-2); background: var(--surface);
+        }
+
+        .content { padding: 28px 32px 40px; max-width: 1240px; width: 100%; }
+        .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+        .page-title { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; }
+        .page-subtitle { font-size: 0.875rem; color: var(--text-2); margin-top: 4px; max-width: 640px; }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            height: 34px; padding: 0 14px; border-radius: var(--radius);
+            font: inherit; font-size: 0.82rem; font-weight: 500; white-space: nowrap;
+            cursor: pointer; text-decoration: none;
+            transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-secondary, .btn-action-ghost, .btn-small-tool, .btn-reset-filters {
+            background: var(--surface); border: 1px solid var(--border-strong); color: var(--text);
+        }
+        .btn-secondary:hover, .btn-action-ghost:hover, .btn-small-tool:hover, .btn-reset-filters:hover {
+            background: var(--surface-2); border-color: #3a4256;
+        }
+        .btn-small-tool, .btn-reset-filters, .btn-action-ghost {
+            display: inline-flex; align-items: center; gap: 8px;
+            height: 34px; padding: 0 14px; border-radius: var(--radius);
+            font: inherit; font-size: 0.82rem; font-weight: 500; cursor: pointer; white-space: nowrap;
+            text-decoration: none; transition: background 0.15s, border-color 0.15s;
+        }
+        .btn-primary { background: var(--primary); border: 1px solid var(--primary); color: #fff; }
+        .btn-primary:hover { background: #3f7cf0; }
+
+        /* ==================== TAB CONTENT ==================== */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.35s var(--ease); }
+
+        /* KPI cards */
+        .stats-bar, .finance-stats-grid {
+            display: grid; gap: 16px; margin-bottom: 24px;
+        }
+        .stats-bar { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .finance-stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+        .stat-card, .finance-card {
+            position: relative;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 18px 18px 16px;
+            transition: border-color 0.2s, transform 0.2s var(--ease);
+            animation: fadeUp 0.45s var(--ease) both;
+        }
+        .stat-card:nth-child(2), .finance-card:nth-child(2) { animation-delay: 0.05s; }
+        .stat-card:nth-child(3), .finance-card:nth-child(3) { animation-delay: 0.1s; }
+        .stat-card:nth-child(4) { animation-delay: 0.15s; }
+        .stat-card:hover, .finance-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+
+        .kpi-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .stat-card .lbl, .finance-card .f-lbl { font-size: 0.8rem; font-weight: 500; color: var(--text-2); }
+        .kpi-icon {
+            width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
+            background: var(--surface-3); color: var(--text-2);
+        }
+        .kpi-icon.success { background: var(--success-soft); color: var(--success-text); }
+        .kpi-icon.danger { background: var(--danger-soft); color: var(--danger-text); }
+        .kpi-icon.warning { background: var(--warning-soft); color: var(--warning-text); }
+        .kpi-icon.primary { background: var(--primary-soft); color: var(--primary); }
+
+        .stat-card .val, .finance-card .f-val {
+            font-size: 1.75rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1;
+            color: var(--text); font-variant-numeric: tabular-nums;
+        }
+        .finance-card .f-val { color: var(--text) !important; }
+        .kpi-foot { font-size: 0.75rem; color: var(--text-3); margin-top: 6px; }
+
+        /* Panels */
+        .section-box {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); margin-bottom: 24px; overflow: hidden;
+            animation: fadeUp 0.45s var(--ease) both; animation-delay: 0.1s;
+        }
+        .section-header {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+            padding: 16px 20px; border-bottom: 1px solid var(--border);
+        }
+        .section-header h2 {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; color: var(--text);
+        }
+        .section-header h2 .ic { color: var(--text-3); }
+        .section-header .sec-desc { font-size: 0.8rem; color: var(--text-3); margin-top: 2px; }
+        .section-body { padding: 20px; }
+
+        /* Toolbar tab 1 */
+        .control-toolbar {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+            padding: 12px 16px; margin-bottom: 16px;
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+        }
+        .guide-text { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-2); }
+        .guide-text .ic { color: var(--text-3); }
+        .guide-text strong { color: var(--text); font-weight: 600; }
+        .quick-bulk-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-gfs-toggle {
+            border-color: rgba(229, 72, 77, 0.45);
+            color: #ff8888;
+        }
+        .btn-gfs-toggle:hover {
+            border-color: var(--danger);
+            background: rgba(229, 72, 77, 0.15);
+            color: #fff;
+        }
+        .btn-gfs-active {
+            background: rgba(229, 72, 77, 0.25) !important;
+            border-color: #ff4444 !important;
+            color: #ff4d4d !important;
+            font-weight: 700 !important;
+            box-shadow: 0 0 12px rgba(255, 68, 68, 0.35) !important;
+        }
+        .tag-helper {
+            display: inline-block;
+            padding: 3px 8px;
+            background: var(--surface-2);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-sm);
+            font-size: 0.72rem;
+            font-family: var(--mono);
+            color: #7aa7ff;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s;
+        }
+        .tag-helper:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--primary);
+            color: #fff;
+        }
+
+        /* Session grid */
+        .sessions-list-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 12px; margin-bottom: 24px;
+        }
+        .session-ctrl-card {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            padding: 14px 16px; background: var(--surface);
+            border: 1px solid var(--border); border-radius: var(--radius-lg);
+            transition: border-color 0.2s, background 0.2s, opacity 0.2s;
+        }
+        .session-ctrl-card:hover { border-color: var(--border-strong); }
+        .session-ctrl-card.state-hidden { opacity: 0.6; background: var(--bg); border-style: dashed; }
+        .session-ctrl-card.state-full { border-color: rgba(229, 72, 77, 0.35); box-shadow: inset 3px 0 0 var(--danger); }
+        .session-info { display: flex; flex-direction: column; gap: 2px; }
+        .session-time-header { display: flex; align-items: center; gap: 8px; }
+        .session-time-num { font-family: var(--mono); font-size: 1.05rem; font-weight: 600; color: var(--text); }
+        .session-sub-price { font-size: 0.78rem; color: var(--text-3); }
+
+        .tag-pill {
+            font-size: 0.68rem; font-weight: 600; padding: 2px 7px; border-radius: 4px;
+            letter-spacing: 0.02em; text-transform: uppercase;
+        }
+        .tag-pill.daily { background: var(--primary-soft); color: #7aa7ff; }
+        .tag-pill.night { background: rgba(167, 139, 250, 0.12); color: #b5a3fb; }
+
+        .toggles-group { display: flex; align-items: center; gap: 16px; }
+        .toggle-item {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 0.78rem; font-weight: 500; color: var(--text-2);
+            cursor: pointer; user-select: none;
+        }
+        /* Checkbox -> switch */
+        .toggle-item input[type="checkbox"] {
+            -webkit-appearance: none; appearance: none;
+            position: relative; width: 32px; height: 18px; border-radius: 999px;
+            background: var(--surface-3); border: 1px solid var(--border-strong);
+            cursor: pointer; transition: background 0.2s, border-color 0.2s; flex-shrink: 0;
+        }
+        .toggle-item input[type="checkbox"]::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 12px; height: 12px; border-radius: 50%; background: var(--text-2);
+            transition: transform 0.2s var(--ease), background 0.2s;
+        }
+        .toggle-item input[type="checkbox"]:checked::after { transform: translateX(14px); background: #fff; }
+        .toggle-item.hide-opt input:checked { background: var(--warning); border-color: var(--warning); }
+        .toggle-item.full-opt input:checked { background: var(--danger); border-color: var(--danger); }
+        .toggle-item input:focus-visible { box-shadow: 0 0 0 3px var(--primary-soft); outline: none; }
+
+        /* ==================== TAB 2: LINK GRUP ==================== */
+        .bulk-apply-box {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 14px 20px; background: var(--surface-2); border-bottom: 1px solid var(--border);
+        }
+        .bulk-apply-box .bulk-label { display: inline-flex; align-items: center; gap: 8px; font-size: 0.82rem; font-weight: 500; color: var(--text-2); white-space: nowrap; }
+        .bulk-apply-box input, .group-link-input, .filter-select-input, .filter-text-input {
+            height: 34px; padding: 0 12px;
+            background: var(--bg); border: 1px solid var(--border-strong); border-radius: var(--radius);
+            color: var(--text); font: inherit; font-size: 0.84rem; outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .bulk-apply-box input { flex: 1; min-width: 240px; }
+        .bulk-apply-box input::placeholder, .group-link-input::placeholder, .filter-text-input::placeholder { color: var(--text-3); }
+        .bulk-apply-box input:focus, .group-link-input:focus, .filter-select-input:focus, .filter-text-input:focus {
+            border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft);
+        }
+        .btn-apply-bulk {
+            height: 34px; padding: 0 14px; border-radius: var(--radius);
+            background: var(--primary); border: 1px solid var(--primary); color: #fff;
+            font: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+            transition: background 0.15s;
+        }
+        .btn-apply-bulk:hover { background: #3f7cf0; }
+
+        .group-link-card-list { display: flex; flex-direction: column; }
+        .group-link-card {
+            display: flex; flex-direction: column; gap: 10px;
+            padding: 16px 20px; border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+        .group-link-card:last-child { border-bottom: none; }
+        .group-link-card:hover { background: rgba(255, 255, 255, 0.015); }
+        .group-link-card-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+        .c2-controls { display: flex; align-items: center; gap: 8px; }
+        .badge-c2-active {
+            font-size: 0.72rem; font-weight: 600; padding: 3px 8px; border-radius: 4px;
+            background: var(--primary-soft); color: #7aa7ff;
+        }
+        .c2-mode-select {
+            height: 30px; padding: 0 8px; background: var(--bg); border: 1px solid var(--border-strong);
+            border-radius: var(--radius-sm); color: var(--text); font: inherit; font-size: 0.78rem; outline: none; cursor: pointer;
+        }
+        .btn-enable-c2 {
+            height: 30px; padding: 0 12px; background: transparent;
+            border: 1px dashed var(--border-strong); border-radius: var(--radius-sm);
+            color: var(--text-2); font: inherit; font-size: 0.78rem; font-weight: 500; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-enable-c2:hover { border-color: var(--primary); color: var(--primary); border-style: solid; }
+        .btn-close-c2 {
+            width: 34px; height: 34px; background: transparent; border: 1px solid var(--border-strong);
+            border-radius: var(--radius); color: var(--text-3); cursor: pointer; transition: all 0.15s;
+        }
+        .btn-close-c2:hover { color: var(--danger-text); border-color: rgba(229, 72, 77, 0.4); background: var(--danger-soft); }
+        .group-input-line { display: grid; grid-template-columns: 72px 1fr auto; align-items: center; gap: 10px; }
+        .group-input-line.c2-line { grid-template-columns: 72px 1fr auto 34px; }
+        .group-link-input { width: 100%; }
+        .input-line-tag {
+            font-family: var(--mono); font-size: 0.7rem; font-weight: 600; text-align: center;
+            padding: 4px 0; border-radius: 4px;
+        }
+        .input-line-tag.c1 { background: var(--success-soft); color: var(--success-text); }
+        .input-line-tag.c2 { background: var(--primary-soft); color: #7aa7ff; }
+        .btn-test-link {
+            height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px;
+            background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius);
+            color: var(--text-2); font: inherit; font-size: 0.8rem; font-weight: 500; cursor: pointer; white-space: nowrap;
+            text-decoration: none; transition: all 0.15s;
+        }
+        .btn-test-link:hover { color: var(--text); background: var(--surface-2); }
+
+        /* ==================== TAB 3: MONITOR ==================== */
+        .monitor-filter-wrapper {
+            display: flex; flex-direction: column; gap: 14px;
+            padding: 16px 20px; border-bottom: 1px solid var(--border);
+        }
+        .monitor-filter-bar {
+            display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px;
+            background: var(--bg); border: 1px solid var(--border); border-radius: 10px; width: fit-content; max-width: 100%;
+        }
+        .filter-pill-btn {
+            display: inline-flex; align-items: center; gap: 7px;
+            height: 30px; padding: 0 12px; border-radius: 7px;
+            background: transparent; border: 1px solid transparent; color: var(--text-2);
+            font: inherit; font-size: 0.8rem; font-weight: 500; cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .filter-pill-btn:hover { color: var(--text); background: var(--surface-2); }
+        .filter-pill-btn.active { background: var(--surface-3); border-color: var(--border-strong); color: var(--text); box-shadow: var(--shadow-sm); }
+        .filter-pill-btn .cnt {
+            font-family: var(--mono); font-size: 0.7rem; padding: 0 6px; border-radius: 4px;
+            background: var(--surface-3); color: var(--text-2); min-width: 20px; text-align: center;
+        }
+        .filter-pill-btn.active .cnt { background: var(--bg); color: var(--text); }
+        .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+        .dot.green { background: var(--success); }
+        .dot.amber { background: var(--warning); }
+        .dot.blue { background: var(--primary); }
+        .dot.red { background: var(--danger); }
+        .dot.gray { background: var(--text-3); }
+
+        .monitor-filter-controls { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+        .filter-control-item { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 200px; }
+        .filter-control-item label { font-size: 0.75rem; font-weight: 500; color: var(--text-3); }
+        .filter-select-input, .filter-text-input { width: 100%; }
+        .filter-select-input { cursor: pointer; }
+        .search-input-box { position: relative; display: flex; align-items: center; }
+        .search-input-box .search-ic { position: absolute; left: 10px; color: var(--text-3); pointer-events: none; }
+        .search-input-box .filter-text-input { padding-left: 34px; padding-right: 32px; }
+        .btn-clear-search {
+            position: absolute; right: 6px; display: none;
+            width: 22px; height: 22px; border-radius: 4px; border: none;
+            background: var(--surface-3); color: var(--text-2); cursor: pointer; font-size: 0.75rem;
+        }
+        .btn-clear-search:hover { color: var(--text); }
+
+        .table-scroll-hint {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            padding: 10px 20px; font-size: 0.75rem; color: var(--text-3);
+            border-bottom: 1px solid var(--border); background: var(--surface-2);
+        }
+        .table-scroll-hint span { display: inline-flex; align-items: center; gap: 6px; }
+        .live-tag { display: inline-flex; align-items: center; gap: 6px; color: var(--success-text); font-weight: 500; }
+
+        /* 10 baris terlihat, sisanya di-scroll */
+        .table-scroll-container {
+            width: 100%; max-height: 466px; overflow: auto;
+            scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent;
+        }
+        .table-scroll-container::-webkit-scrollbar { width: 10px; height: 10px; }
+        .table-scroll-container::-webkit-scrollbar-track { background: transparent; }
+        .table-scroll-container::-webkit-scrollbar-thumb {
+            background: var(--border-strong); border-radius: 10px; border: 3px solid var(--surface);
+        }
+        .table-scroll-container::-webkit-scrollbar-thumb:hover { background: #3f4759; }
+
+        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem; text-align: left; }
+        .data-table thead th {
+            position: sticky; top: 0; z-index: 5;
+            height: 40px; padding: 0 16px;
+            background: var(--surface-2); color: var(--text-3);
+            font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border); white-space: nowrap;
+        }
+        .data-table td {
+            height: 42px; padding: 0 16px; color: var(--text-2);
+            border-bottom: 1px solid var(--border); white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
+        .data-table tbody tr { transition: background 0.12s; }
+        .data-table tbody tr:hover td { background: rgba(255, 255, 255, 0.02); color: var(--text); }
+        .data-table tbody tr:last-child td { border-bottom: none; }
+        .data-table td strong, .data-table .team { color: var(--text); font-weight: 600; }
+        .data-table .code { font-family: var(--mono); font-size: 0.76rem; color: var(--text); background: var(--surface-3); padding: 2px 6px; border-radius: 4px; }
+        .data-table .amount { font-family: var(--mono); font-weight: 600; color: var(--text); }
+        .data-table .amount.in { color: var(--success-text); }
+        .data-table .muted { color: var(--text-3); }
+        .data-table .wa-link { color: var(--text-2); text-decoration: none; border-bottom: 1px dashed var(--border-strong); }
+        .data-table .wa-link:hover { color: var(--primary); border-color: var(--primary); }
+        .data-table .msg-cell { white-space: normal; max-width: 360px; min-width: 240px; line-height: 1.45; padding-top: 10px; padding-bottom: 10px; }
+        .empty-cell { text-align: center; color: var(--text-3); padding: 32px 16px !important; height: auto !important; }
+        .empty-cell a { color: var(--primary); text-decoration: none; font-weight: 500; margin-left: 6px; }
+
+        /* Badges */
+        .badge-status, .badge-pot {
+            display: inline-flex; align-items: center; gap: 6px;
+            height: 22px; padding: 0 8px; border-radius: 999px;
+            font-size: 0.72rem; font-weight: 600; white-space: nowrap;
+            border: 1px solid transparent;
+        }
+        .badge-status::before, .badge-pot::before {
+            content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+        }
+        .badge-status.lunas { background: var(--success-soft); color: var(--success-text); border-color: rgba(48, 164, 108, 0.25); }
+        .badge-status.pending { background: var(--warning-soft); color: var(--warning-text); border-color: rgba(245, 165, 36, 0.25); }
+        .badge-pot { cursor: help; margin-right: 4px; font-family: var(--mono); font-weight: 600; }
+        .badge-pot.c1 { background: var(--success-soft); color: var(--success-text); border-color: rgba(48, 164, 108, 0.25); }
+        .badge-pot.c2 { background: var(--primary-soft); color: #7aa7ff; border-color: rgba(79, 140, 255, 0.25); }
+        .badge-pot.overbook { background: var(--danger-soft); color: var(--danger-text); border-color: rgba(229, 72, 77, 0.3); }
+
+        .link-chip {
+            display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px;
+            border: 1px solid var(--border-strong); border-radius: 6px;
+            color: var(--text-2); text-decoration: none; font-size: 0.75rem; font-weight: 500; transition: all 0.15s;
+        }
+        .link-chip:hover { color: var(--text); background: var(--surface-3); }
+        .btn-chat-overbook-admin {
+            display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px;
+            border-radius: 6px; background: rgba(37, 211, 102, 0.1); border: 1px solid rgba(37, 211, 102, 0.3);
+            color: #4ade80; text-decoration: none; font-size: 0.75rem; font-weight: 600; white-space: nowrap;
+            transition: all 0.15s;
+        }
+        .btn-chat-overbook-admin:hover { background: rgba(37, 211, 102, 0.18); }
+
+        /* ==================== SAVE BAR ==================== */
+        .save-bar {
+            position: sticky; bottom: 20px; z-index: 40;
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            margin: 8px 32px 24px; max-width: 1176px;
+            padding: 10px 10px 10px 18px;
+            background: rgba(18, 18, 42, 0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+            border: 1.5px solid var(--border); border-radius: var(--radius-lg);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 25px rgba(0, 240, 118, 0.1);
+            animation: fadeUp 0.4s var(--ease);
+        }
+        .save-bar.is-hidden { display: none; }
+        .save-status-text { display: flex; align-items: center; gap: 10px; font-size: 0.82rem; color: var(--text-2); }
+        .btn-save-database {
+            height: 38px; padding: 0 20px; border-radius: var(--radius);
+            background: linear-gradient(135deg, #00f076 0%, #00b355 100%);
+            color: #061c10; border: none;
+            font: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0, 240, 118, 0.35);
+            transition: opacity 0.15s, transform 0.1s, box-shadow 0.2s;
+        }
+        .btn-save-database:hover:not(:disabled) { opacity: 0.95; box-shadow: 0 6px 22px rgba(0, 240, 118, 0.5); transform: translateY(-1px); }
+        .btn-save-database:active:not(:disabled) { transform: scale(0.98); }
+        .btn-save-database:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        /* ==================== TOAST ==================== */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+            display: flex; align-items: center; gap: 10px;
+            min-width: 280px; max-width: 420px; padding: 12px 16px;
+            background: var(--surface-2); border: 1px solid var(--border-strong);
+            border-left: 3px solid var(--text-3);
+            border-radius: var(--radius); box-shadow: var(--shadow);
+            font-size: 0.85rem; font-weight: 500; color: var(--text);
+            transform: translateY(16px); opacity: 0; pointer-events: none;
+            transition: transform 0.3s var(--ease), opacity 0.3s var(--ease);
+        }
+        .toast.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--danger); }
+
+        /* ==================== ANIMATIONS ==================== */
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes growY { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(48, 164, 108, 0.55); }
+            70% { box-shadow: 0 0 0 6px rgba(48, 164, 108, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(48, 164, 108, 0); }
+        }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-4px); } 50% { transform: translateX(4px); } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 1080px) {
+            .stats-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 900px) {
+            .app-shell { grid-template-columns: 1fr; }
+            .sidebar { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 16px; border-right: none; border-bottom: 1px solid var(--border); }
+            .sb-brand { border: none; margin: 0; padding: 0; }
+            .sb-label, .sb-spacer, .sb-link { display: none; }
+            .admin-tab-nav { flex-direction: row; width: 100%; overflow-x: auto; order: 3; }
+            .tab-btn { width: auto; white-space: nowrap; }
+            .tab-btn.active::before { display: none; }
+            .sb-user { margin: 0 0 0 auto; padding: 6px 8px; }
+            .topbar { padding: 0 16px; position: static; }
+            .content { padding: 20px 16px 32px; }
+            .finance-stats-grid { grid-template-columns: 1fr; }
+            .sessions-list-grid { grid-template-columns: 1fr; }
+            .save-bar { margin: 8px 16px 16px; flex-direction: column; align-items: stretch; }
+            .btn-save-database { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <div class="container">
+        <!-- ==================== 1. LOGIN ==================== -->
+        <div class="login-card" id="loginSection">
+            <div class="login-brand">
+                <img src="logo.jpg" alt="Papih Gaming" class="panel-logo" />
+                <div>
+                    <div class="login-title">Papih Gaming</div>
+                    <div class="login-subtitle">Scrim Management Console</div>
+                </div>
+            </div>
+
+            <h1 class="login-heading">Masuk ke Admin</h1>
+            <p class="login-desc">Gunakan akun admin yang terdaftar untuk melanjutkan.</p>
+
+            <div class="alert-box" id="loginAlert"></div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" class="admin-input" placeholder="admin@domain.com" required autocomplete="username" />
+                </div>
+                <div class="input-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" class="admin-input" placeholder="••••••••" required autocomplete="current-password" />
+                </div>
+                <button type="submit" class="btn-submit" id="btnLogin">Masuk ke Panel</button>
+            </form>
+
+            <div class="login-footer">
+                <a href="index.html">← Kembali ke halaman registrasi</a>
+            </div>
+        </div>
+
+        <!-- ==================== 2. DASHBOARD ==================== -->
+        <div class="dashboard-wrapper" id="dashboardSection">
+            <div class="app-shell">
+                <!-- SIDEBAR -->
+                <aside class="sidebar">
+                    <div class="sb-brand">
+                        <img src="logo.jpg" alt="Logo" class="dash-mini-logo" />
+                        <div>
+                            <div class="sb-brand-name">Papih Gaming</div>
+                            <div class="sb-brand-sub">Admin Console</div>
+                        </div>
+                    </div>
+
+                    <div class="sb-label">Menu</div>
+                    <nav class="admin-tab-nav" aria-label="Navigasi admin">
+                        <button class="tab-btn active" id="tabBtnSessions" onclick="switchAdminTab('sessions'); setPageHeader('sessions')">
+                            <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                            Kelola Sesi
+                        </button>
+                        <button class="tab-btn" id="tabBtnGroups" onclick="switchAdminTab('groups'); setPageHeader('groups')">
+                            <svg class="ic" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                            Link Grup WhatsApp
+                        </button>
+                        <button class="tab-btn" id="tabBtnMonitor" onclick="switchAdminTab('monitor'); setPageHeader('monitor')">
+                            <svg class="ic" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                            Live Monitor
+                            <span class="nav-badge">LIVE</span>
+                        </button>
+                        <button class="tab-btn" id="tabBtnAdminWa" onclick="switchAdminTab('adminWa'); setPageHeader('adminWa')">
+                            <svg class="ic" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            Nomor Admin
+                        </button>
+                    </nav>
+
+                    <div class="sb-spacer"></div>
+
+                    <a href="index.html" target="_blank" class="sb-link" title="Buka website yang dilihat peserta">
+                        <svg class="ic" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14L21 3"/></svg>
+                        Buka Web Peserta
+                    </a>
+
+                    <div class="sb-user">
+                        <div class="sb-avatar">
+                            <svg class="ic ic-sm" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                        <div class="sb-user-info">
+                            <div class="sb-user-email" id="userEmailDisplay">admin</div>
+                            <div class="user-status"><span class="online-dot"></span> Terverifikasi</div>
+                        </div>
+                        <button class="btn-logout" onclick="handleLogout()" title="Keluar">
+                            <svg class="ic ic-sm" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+                        </button>
+                    </div>
+                </aside>
+
+                <!-- MAIN -->
+                <main class="main">
+                    <header class="topbar">
+                        <div class="crumbs">
+                            <span>Admin</span>
+                            <span>/</span>
+                            <strong id="crumbCurrent">Kelola Sesi</strong>
+                        </div>
+                        <div class="topbar-actions">
+                            <span class="status-pill"><span class="online-dot"></span> Firebase RTDB terhubung</span>
+                        </div>
+                    </header>
+
+                    <div class="content">
+                        <div class="page-head">
+                            <div>
+                                <h1 class="page-title" id="pageTitle">Kelola Sesi Scrim</h1>
+                                <p class="page-subtitle" id="pageSubtitle">Atur sesi yang tampil di formulir pendaftaran. Perubahan berlaku setelah disimpan.</p>
+                            </div>
+                        </div>
+
+                        <!-- ============ TAB 1: KELOLA SESI ============ -->
+                        <section class="tab-content active" id="tabContentSessions">
+                            <div class="stats-bar">
+                                <div class="stat-card">
+                                    <div class="kpi-head">
+                                        <div class="lbl">Total Sesi</div>
+                                        <div class="kpi-icon"><svg class="ic ic-sm" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+                                    </div>
+                                    <div class="val" id="statTotal">19</div>
+                                    <div class="kpi-foot">Daily &amp; Night</div>
+                                </div>
+                                <div class="stat-card active-stat">
+                                    <div class="kpi-head">
+                                        <div class="lbl">Sesi Buka</div>
+                                        <div class="kpi-icon success"><svg class="ic ic-sm" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg></div>
+                                    </div>
+                                    <div class="val" id="statActive">0</div>
+                                    <div class="kpi-foot">Bisa dipilih peserta</div>
+                                </div>
+                                <div class="stat-card full-stat">
+                                    <div class="kpi-head">
+                                        <div class="lbl">Sesi Penuh</div>
+                                        <div class="kpi-icon danger"><svg class="ic ic-sm" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+                                    </div>
+                                    <div class="val" id="statFull">0</div>
+                                    <div class="kpi-foot">Terkunci (FULL)</div>
+                                </div>
+                                <div class="stat-card hidden-stat">
+                                    <div class="kpi-head">
+                                        <div class="lbl">Disembunyikan</div>
+                                        <div class="kpi-icon warning"><svg class="ic ic-sm" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19M1 1l22 22"/></svg></div>
+                                    </div>
+                                    <div class="val" id="statHidden">0</div>
+                                    <div class="kpi-foot">Tidak tampil di web</div>
+                                </div>
+                            </div>
+
+                            <div class="control-toolbar">
+                                <div class="guide-text">
+                                    <svg class="ic ic-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+                                    <span><strong>Sembunyikan</strong> menghapus sesi dari web. <strong>Full</strong> mengunci sesi. <strong>Full Slot</strong> menutup seluruh pendaftaran (Lanjut Besok).</span>
+                                </div>
+                                <div class="quick-bulk-btns">
+                                    <button type="button" class="btn-small-tool" onclick="resetAllStates()" title="Buka seluruh sesi dan lepas status Full Slot">Buka Semua</button>
+                                    <button type="button" class="btn-small-tool" onclick="markAllFull()" title="Tandai seluruh sesi menjadi Full">Tandai Semua Full</button>
+                                    <button type="button" class="btn-small-tool" onclick="hideAllSessions()" title="Sembunyikan seluruh sesi dari formulir">Sembunyikan Semua</button>
+                                    <button type="button" class="btn-small-tool btn-gfs-toggle" id="btnToggleGlobalFullSlot" onclick="toggleGlobalFullSlot()" title="Kunci pendaftaran: FULL SLOT YAH LANJUT BESOK">
+                                        <span id="gfsBtnIcon">⛔</span> <span id="gfsBtnText">Full Slot</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="sessions-list-grid" id="sessionListGrid">
+                                <!-- Diisi otomatis oleh JavaScript -->
+                            </div>
+                        </section>
+
+                        <!-- ============ TAB 2: LINK GRUP ============ -->
+                        <section class="tab-content" id="tabContentGroups">
+                            <div class="section-box">
+                                <div class="section-header">
+                                    <div>
+                                        <h2>
+                                            <svg class="ic" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                                            Link Grup per Sesi
+                                        </h2>
+                                        <div class="sec-desc">Peserta berstatus lunas otomatis menerima tombol link grup sesuai jam sesi yang dipilih.</div>
+                                    </div>
+                                </div>
+
+                                <div class="bulk-apply-box">
+                                    <span class="bulk-label">
+                                        <svg class="ic ic-sm" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                                        Terapkan 1 link ke semua sesi
+                                    </span>
+                                    <input type="url" id="bulkGroupLinkInput" placeholder="https://chat.whatsapp.com/..." />
+                                    <button class="btn-apply-bulk" onclick="applyBulkGroupLink()">Terapkan</button>
+                                </div>
+
+                                <div class="group-link-card-list" id="groupLinkCardList">
+                                    <!-- Diisi otomatis oleh JavaScript untuk 19 sesi -->
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- ============ TAB 3: LIVE MONITOR ============ -->
+                        <section class="tab-content" id="tabContentMonitor">
+                            <div class="finance-stats-grid">
+                                <div class="finance-card">
+                                    <div class="kpi-head">
+                                        <div class="f-lbl">Total Pemasukan</div>
+                                        <div class="kpi-icon success"><svg class="ic ic-sm" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M16 13h2M2 10h20"/></svg></div>
+                                    </div>
+                                    <div class="f-val" id="monTotalUang">Rp 0</div>
+                                    <div class="kpi-foot">Akumulasi pendaftar lunas</div>
+                                </div>
+                                <div class="finance-card">
+                                    <div class="kpi-head">
+                                        <div class="f-lbl">Tim Lunas</div>
+                                        <div class="kpi-icon primary"><svg class="ic ic-sm" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg></div>
+                                    </div>
+                                    <div class="f-val" id="monTotalLunas">0</div>
+                                    <div class="kpi-foot">Pembayaran terverifikasi</div>
+                                </div>
+                                <div class="finance-card">
+                                    <div class="kpi-head">
+                                        <div class="f-lbl">Menunggu Pembayaran</div>
+                                        <div class="kpi-icon warning"><svg class="ic ic-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+                                    </div>
+                                    <div class="f-val" id="monTotalPending">0</div>
+                                    <div class="kpi-foot">Status pending</div>
+                                </div>
+                            </div>
+
+                            <!-- TABEL REGISTRASI -->
+                            <div class="section-box">
+                                <div class="section-header">
+                                    <div>
+                                        <h2>
+                                            <svg class="ic" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                            Registrasi Tim
+                                        </h2>
+                                        <div class="sec-desc">Data realtime dari Google Sheet DATA.</div>
+                                    </div>
+                                    <button class="btn-small-tool" onclick="loadMonitorData(true)">
+                                        <svg class="ic ic-sm" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg>
+                                        Segarkan
+                                    </button>
+                                </div>
+
+                                <div class="monitor-filter-wrapper">
+                                    <div class="monitor-filter-bar" role="tablist">
+                                        <button type="button" class="filter-pill-btn active" id="filterBtnAll" onclick="setMonitorFilter('all')">
+                                            Semua <span class="cnt" id="countFilterAll">0</span>
+                                        </button>
+                                        <button type="button" class="filter-pill-btn lunas" id="filterBtnLunas" onclick="setMonitorFilter('lunas')">
+                                            <span class="dot green"></span> Lunas <span class="cnt" id="countFilterLunas">0</span>
+                                        </button>
+                                        <button type="button" class="filter-pill-btn pending" id="filterBtnPending" onclick="setMonitorFilter('pending')">
+                                            <span class="dot amber"></span> Pending <span class="cnt" id="countFilterPending">0</span>
+                                        </button>
+                                        <button type="button" class="filter-pill-btn c1" id="filterBtnC1" onclick="setMonitorFilter('c1')">
+                                            <span class="dot green"></span> Pot C1 <span class="cnt" id="countFilterC1">0</span>
+                                        </button>
+                                        <button type="button" class="filter-pill-btn c2" id="filterBtnC2" onclick="setMonitorFilter('c2')">
+                                            <span class="dot blue"></span> Pot C2 <span class="cnt" id="countFilterC2">0</span>
+                                        </button>
+                                        <button type="button" class="filter-pill-btn overbook" id="filterBtnOverbook" onclick="setMonitorFilter('overbook')">
+                                            <span class="dot red"></span> Overbook <span class="cnt" id="countFilterOverbook">0</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="monitor-filter-controls">
+                                        <div class="filter-control-item" style="max-width: 240px;">
+                                            <label for="filterSessionSelect">Sesi jam</label>
+                                            <select id="filterSessionSelect" class="filter-select-input" onchange="onSessionFilterChange(this.value)">
+                                                <option value="all">Semua sesi</option>
+                                            </select>
+                                        </div>
+                                        <div class="filter-control-item search-item">
+                                            <label for="filterSearchInput">Pencarian</label>
+                                            <div class="search-input-box">
+                                                <svg class="ic ic-sm search-ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                                                <input type="text" id="filterSearchInput" class="filter-text-input" placeholder="Cari tim, kapten, WhatsApp, atau kode..." oninput="onSearchFilterChange(this.value)">
+                                                <button type="button" class="btn-clear-search" id="btnClearSearch" onclick="clearSearchFilter()" title="Hapus pencarian">✕</button>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn-reset-filters" onclick="resetAllMonitorFilters()" title="Kembalikan semua filter ke awal">Reset filter</button>
+                                    </div>
+                                </div>
+
+                                <div class="table-scroll-hint">
+                                    <span>Menampilkan 10 baris — scroll di dalam tabel untuk melihat data lainnya</span>
+                                    <span class="live-tag"><span class="online-dot"></span> Auto-refresh 6 dtk</span>
+                                </div>
+
+                                <div class="table-scroll-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Waktu</th>
+                                                <th>Kode</th>
+                                                <th>Nama Tim</th>
+                                                <th>Logo</th>
+                                                <th>Kapten</th>
+                                                <th>WhatsApp</th>
+                                                <th>Sesi</th>
+                                                <th>Alokasi Pot</th>
+                                                <th>Total</th>
+                                                <th>Status</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbodyRegistrations">
+                                            <tr><td colspan="11" class="empty-cell">Memuat data pendaftar...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- TABEL NOTIFIKASI DANA -->
+                            <div class="section-box">
+                                <div class="section-header">
+                                    <div>
+                                        <h2>
+                                            <svg class="ic" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                                            Notifikasi DANA Bisnis
+                                        </h2>
+                                        <div class="sec-desc">Log transfer masuk yang dikirim otomatis oleh MacroDroid (NOTIF_LOG).</div>
+                                    </div>
+                                </div>
+
+                                <div class="table-scroll-hint">
+                                    <span>Menampilkan 10 log terbaru — scroll untuk riwayat lainnya</span>
+                                </div>
+
+                                <div class="table-scroll-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Diterima</th>
+                                                <th>Nominal</th>
+                                                <th>Pesan Notifikasi</th>
+                                                <th>Status</th>
+                                                <th>Kode / Info</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbodyNotifications">
+                                            <tr><td colspan="5" class="empty-cell">Memuat log notifikasi...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- ============ TAB 4: NOMOR ADMIN ============ -->
+                        <section class="tab-content" id="tabContentAdminWa">
+                            <div class="section-box">
+                                <div class="section-header">
+                                    <div>
+                                        <h2>
+                                            <svg class="ic" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                            Pengaturan Nomor WhatsApp Admin
+                                        </h2>
+                                        <div class="sec-desc">Nomor ini digunakan jika slot penuh namun peserta sudah transfer untuk diarahkan refund / pindah sesi, serta bantuan chat admin di web pendaftaran.</div>
+                                    </div>
+                                </div>
+
+                                <div class="section-body">
+                                    <div style="max-width: 620px;">
+                                        <div style="margin-bottom: 20px;">
+                                            <label for="adminWaInput" style="display:block; font-size:0.85rem; font-weight:600; color:var(--text); margin-bottom:8px;">
+                                                Nomor WhatsApp Resmi Admin
+                                            </label>
+                                            <div style="display:flex; gap:10px; align-items:center;">
+                                                <input type="text" id="adminWaInput" class="admin-input" placeholder="Contoh: 085166235006 atau 6285166235006" style="flex:1; height:42px; font-family:var(--mono); font-size:0.95rem;" oninput="onAdminWaInputChange(this.value)">
+                                                <button type="button" class="btn btn-secondary" onclick="testAdminWaLink()" style="height:42px;" title="Coba buka chat WhatsApp dengan nomor ini">
+                                                    <svg class="ic ic-sm" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14L21 3"/></svg>
+                                                    Tes Chat
+                                                </button>
+                                            </div>
+                                            <div style="font-size:0.78rem; color:var(--text-3); margin-top:6px;">
+                                                Format bebas (misal <code>085166235006</code> atau <code>6285166235006</code>). Sistem otomatis menyesuaikan format saat digunakan pada link WhatsApp.
+                                            </div>
+                                        </div>
+
+                                        <div class="admin-wa-preview-card" style="background:var(--surface-2); border:1px solid var(--border-strong); border-radius:var(--radius); padding:16px;">
+                                            <div style="font-size:0.8rem; font-weight:600; color:var(--text-2); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">Nomor Admin yang Aktif:</div>
+                                            <div style="display:flex; align-items:center; gap:10px;">
+                                                <span class="online-dot" style="width:10px; height:10px;"></span>
+                                                <span id="adminWaActivePreview" style="font-family:var(--mono); font-size:1.15rem; font-weight:700; color:#00f076;">+62 851-6623-5006</span>
+                                            </div>
+                                            <div style="font-size:0.78rem; color:var(--text-3); margin-top:10px; line-height:1.5;">
+                                                💡 Jika nomor atau kalimat diubah, klik tombol <strong>"Simpan Perubahan"</strong> di bawah. Web pendaftaran peserta dan tombol overbook refund akan langsung tersinkron secara realtime.
+                                            </div>
+                                        </div>
+
+                                        <!-- KUSTOMISASI KALIMAT CHAT WA -->
+                                        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);">
+                                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                                                <div>
+                                                    <h3 style="font-size:0.92rem; font-weight:700; color:var(--text); margin:0;">
+                                                        💬 Kustomisasi Kalimat Chat WhatsApp
+                                                    </h3>
+                                                    <div style="font-size:0.78rem; color:var(--text-3); margin-top:2px;">
+                                                        Atur kalimat yang otomatis terisi saat diarahkan ke WhatsApp. Klik tag untuk menyisipkan data dinamis.
+                                                    </div>
+                                                </div>
+                                                <button type="button" class="btn btn-secondary" onclick="resetWaTemplatesToDefault()" style="font-size:0.75rem; height:30px; padding:0 10px;">
+                                                    ↺ Reset Kalimat Standar
+                                                </button>
+                                            </div>
+
+                                            <!-- 1. Peserta ke Admin (Overbook) -->
+                                            <div style="margin-bottom: 18px;">
+                                                <label for="waMsgOverbookInput" style="display:block; font-size:0.82rem; font-weight:600; color:var(--text); margin-bottom:6px;">
+                                                    1. Kalimat Peserta ke WA Admin (Jika Overbook / Slot Penuh Tapi Sudah TF)
+                                                </label>
+                                                <textarea id="waMsgOverbookInput" rows="3" class="admin-input" style="width:100%; height:auto; padding:10px 12px; font-family:inherit; font-size:0.84rem; line-height:1.4; resize:vertical;"></textarea>
+                                                <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
+                                                    <span class="tag-helper" onclick="insertTag('waMsgOverbookInput', '{teamName}')">+ {teamName}</span>
+                                                    <span class="tag-helper" onclick="insertTag('waMsgOverbookInput', '{sessions}')">+ {sessions}</span>
+                                                    <span class="tag-helper" onclick="insertTag('waMsgOverbookInput', '{transactionId}')">+ {transactionId}</span>
+                                                    <span class="tag-helper" onclick="insertTag('waMsgOverbookInput', '{totalPrice}')">+ {totalPrice}</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- 2. Admin ke Peserta (Tombol Chat Refund di Live Monitor) -->
+                                            <div style="margin-bottom: 18px;">
+                                                <label for="waMsgAdminRefundInput" style="display:block; font-size:0.82rem; font-weight:600; color:var(--text); margin-bottom:6px;">
+                                                    2. Kalimat Admin ke Peserta (Tombol "Chat refund" di Live Monitor Admin)
+                                                </label>
+                                                <textarea id="waMsgAdminRefundInput" rows="3" class="admin-input" style="width:100%; height:auto; padding:10px 12px; font-family:inherit; font-size:0.84rem; line-height:1.4; resize:vertical;"></textarea>
+                                                <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
+                                                    <span class="tag-helper" onclick="insertTag('waMsgAdminRefundInput', '{teamName}')">+ {teamName}</span>
+                                                    <span class="tag-helper" onclick="insertTag('waMsgAdminRefundInput', '{sessions}')">+ {sessions}</span>
+                                                    <span class="tag-helper" onclick="insertTag('waMsgAdminRefundInput', '{transactionId}')">+ {transactionId}</span>
+                                                    <span class="tag-helper" onclick="insertTag('waMsgAdminRefundInput', '{totalPrice}')">+ {totalPrice}</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- 3. Peserta ke Admin (Timer Habis) -->
+                                            <div style="margin-bottom: 18px;">
+                                                <label for="waMsgExpiredInput" style="display:block; font-size:0.82rem; font-weight:600; color:var(--text); margin-bottom:6px;">
+                                                    3. Kalimat Peserta ke WA Admin (Tombol "Sudah Transfer? Chat Admin" saat 5 Menit Habis)
+                                                </label>
+                                                <textarea id="waMsgExpiredInput" rows="2" class="admin-input" style="width:100%; height:auto; padding:10px 12px; font-family:inherit; font-size:0.84rem; line-height:1.4; resize:vertical;"></textarea>
+                                                <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
+                                                    <span class="tag-helper" onclick="insertTag('waMsgExpiredInput', '{teamName}')">+ {teamName}</span>
+                                                    <span class="tag-helper" onclick="insertTag('waMsgExpiredInput', '{transactionId}')">+ {transactionId}</span>
+                                                    <span class="tag-helper" onclick="insertTag('waMsgExpiredInput', '{totalPrice}')">+ {totalPrice}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- SAVE BAR (Tab 1, 2, 4) -->
+                    <div class="save-bar" id="bottomSaveBar">
+                        <div class="save-status-text">
+                            <span class="online-dot"></span>
+                            <span id="syncIndicator">Terhubung realtime ke Firebase — simpan untuk menerapkan perubahan</span>
+                        </div>
+                        <button class="btn-save-database" id="btnSaveDb" onclick="saveToDatabase()">Simpan Perubahan</button>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Header halaman mengikuti tab aktif (UI saja, tidak mengubah logika data)
+        const PAGE_META = {
+            sessions: { crumb: 'Kelola Sesi', title: 'Kelola Sesi Scrim', sub: 'Atur sesi yang tampil di formulir pendaftaran. Perubahan berlaku setelah disimpan.', save: true },
+            groups:   { crumb: 'Link Grup WhatsApp', title: 'Link Grup WhatsApp', sub: 'Kelola link grup Pot C1 / C2 untuk setiap sesi. Perubahan berlaku setelah disimpan.', save: true },
+            monitor:  { crumb: 'Live Monitor', title: 'Live Monitor', sub: 'Pantau pendaftar, alokasi pot, dan pembayaran masuk secara realtime.', save: false },
+            adminWa:  { crumb: 'Nomor Admin', title: 'Pengaturan Nomor Admin', sub: 'Atur nomor WhatsApp admin untuk konfirmasi overbook, refund, atau pemindahan sesi.', save: true }
+        };
+        function setPageHeader(tab) {
+            const m = PAGE_META[tab];
+            if (!m) return;
+            document.getElementById('crumbCurrent').textContent = m.crumb;
+            document.getElementById('pageTitle').textContent = m.title;
+            document.getElementById('pageSubtitle').textContent = m.sub;
+            document.getElementById('bottomSaveBar').classList.toggle('is-hidden', !m.save);
+        }
+    </script>
+
+    <script>
+        // ==================== KONFIGURASI BACKEND ====================
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzTfUGVc42_wqFYcJAySu2P8AmROGbG-QdFcKpgFOoASvRC41LCBHVhSUl4Absn5NiV/exec';
+
+        // ==================== FIREBASE CONFIG ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBp57WGOhmhcCTfQA_kOb3Nh_XZS-9sIww",
+            authDomain: "registrasi-5d8e1.firebaseapp.com",
+            databaseURL: "https://registrasi-5d8e1-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "registrasi-5d8e1",
+            storageBucket: "registrasi-5d8e1.firebasestorage.app",
+            messagingSenderId: "3774493819",
+            appId: "1:3774493819:web:56ded4fef4637095f71ede",
+            measurementId: "G-LDB9SDJWB8"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const rtdb = firebase.database();
+
+        // 19 Master Sesi Sesuai Formulir Pendaftaran Peserta
+        const MASTER_SESSIONS = [
+            { time: "10.00", type: "daily", price: "5.000" },
+            { time: "11.00", type: "daily", price: "5.000" },
+            { time: "12.00", type: "daily", price: "5.000" },
+            { time: "13.00", type: "daily", price: "5.000" },
+            { time: "14.00", type: "daily", price: "5.000" },
+            { time: "15.00", type: "daily", price: "5.000" },
+            { time: "16.00", type: "daily", price: "5.000" },
+            { time: "17.00", type: "daily", price: "5.000" },
+            { time: "19.00", type: "daily", price: "5.000" },
+            { time: "19.00", type: "night", price: "10.000" },
+            { time: "20.00", type: "daily", price: "5.000" },
+            { time: "20.00", type: "night", price: "10.000" },
+            { time: "21.00", type: "daily", price: "5.000" },
+            { time: "21.00", type: "night", price: "10.000" },
+            { time: "22.00", type: "daily", price: "5.000" },
+            { time: "22.00", type: "night", price: "10.000" },
+            { time: "23.00", type: "daily", price: "5.000" },
+            { time: "00.00", type: "daily", price: "5.000" },
+            { time: "01.00", type: "daily", price: "5.000" }
+        ];
+
+        let currentHidden = [];
+        let currentFull = [];
+        let currentGroupLinks = {};
+        let isGlobalFullSlot = false;
+        let currentAdminWa = '6285166235006';
+        const DEFAULT_WA_TEMPLATES = {
+            overbook: "Halo Admin, pembayaran saya berhasil namun overbook/full slot. Sesi: {sessions}, Kode Scrim: {transactionId}, Nama Tim: {teamName}, Nominal: Rp {totalPrice}. Mohon info untuk refund/pengalihan sesi ya min.",
+            adminRefund: "Halo Kapten {teamName}, kami dari Admin Scrim ingin konfirmasi terkait pendaftaran Sesi {sessions} (Kode: {transactionId}). Sesi tersebut sudah OVERBOOK / slot penuh. Dana Anda sebesar Rp {totalPrice} akan segera kami refund atau dialihkan ke sesi berikutnya. Mohon infokan nomor rekening/e-wallet Anda ya kak.",
+            expired: "Halo Admin, batas waktu pendaftaran 5 menit saya habis namun saya sudah terlanjur transfer. Kode Scrim: {transactionId}, Nominal: Rp {totalPrice}, Tim: {teamName}. Mohon dicek ya min."
+        };
+        let currentWaTemplates = { ...DEFAULT_WA_TEMPLATES };
+        let monitorTimer = null;
+
+        function getSessionKey(time, type) {
+            return `${time}_${type}`.replace('.', '_');
+        }
+
+        // ==================== TAB SWITCHING ====================
+        function switchAdminTab(tabName) {
+            ['sessions', 'groups', 'monitor', 'adminWa'].forEach(t => {
+                const btn = document.getElementById('tabBtn' + capitalize(t));
+                const content = document.getElementById('tabContent' + capitalize(t));
+                if (btn && content) {
+                    if (t === tabName) {
+                        btn.classList.add('active');
+                        content.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                        content.classList.remove('active');
+                    }
+                }
+            });
+
+            clearInterval(monitorTimer);
+            if (tabName === 'monitor') {
+                loadMonitorData();
+                monitorTimer = setInterval(loadMonitorData, 6000);
+            }
+        }
+
+        function capitalize(s) {
+            return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+
+        // ==================== AUTH STATE ====================
+        auth.onAuthStateChanged((user) => {
+            const loginSection = document.getElementById('loginSection');
+            const dashboardSection = document.getElementById('dashboardSection');
+
+            if (user) {
+                loginSection.style.display = 'none';
+                dashboardSection.style.display = 'block';
+                document.getElementById('userEmailDisplay').textContent = user.email || 'Admin';
+                loadDataFromDatabase();
+            } else {
+                loginSection.style.display = 'block';
+                dashboardSection.style.display = 'none';
+            }
+        });
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const pass = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('btnLogin');
+            const alertEl = document.getElementById('loginAlert');
+
+            btn.disabled = true;
+            btn.textContent = 'Memverifikasi...';
+            alertEl.classList.remove('show');
+
+            auth.signInWithEmailAndPassword(email, pass)
+                .then(() => {
+                    showToast('Login berhasil! Selamat datang Admin.', 'success');
+                })
+                .catch((error) => {
+                    alertEl.textContent = 'Gagal Masuk: ' + (error.message || error.code);
+                    alertEl.classList.add('show');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.textContent = 'Masuk ke Panel';
+                });
+        }
+
+        function handleLogout() {
+            if (confirm('Yakin ingin keluar dari Admin Panel?')) {
+                auth.signOut().then(() => {
+                    showToast('Anda telah logout.', 'success');
+                });
+            }
+        }
+
+        // ==================== LOAD DATABASE ====================
+        function loadDataFromDatabase() {
+            rtdb.ref('scrim_sessions').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    currentHidden = data.hidden || [];
+                    currentFull = data.full || [];
+                    currentGroupLinks = data.groupLinks || {};
+                    isGlobalFullSlot = !!data.globalFullSlot;
+                    if (data.adminWhatsapp) {
+                        currentAdminWa = cleanWaNumber(data.adminWhatsapp);
+                    }
+                    if (data.waTemplates) {
+                        currentWaTemplates = {
+                            overbook: data.waTemplates.overbook || DEFAULT_WA_TEMPLATES.overbook,
+                            adminRefund: data.waTemplates.adminRefund || DEFAULT_WA_TEMPLATES.adminRefund,
+                            expired: data.waTemplates.expired || DEFAULT_WA_TEMPLATES.expired
+                        };
+                    }
+                    const waInput = document.getElementById('adminWaInput');
+                    if (waInput && document.activeElement !== waInput) {
+                        waInput.value = currentAdminWa;
+                    }
+                    const elOb = document.getElementById('waMsgOverbookInput');
+                    const elAr = document.getElementById('waMsgAdminRefundInput');
+                    const elEx = document.getElementById('waMsgExpiredInput');
+                    if (elOb && document.activeElement !== elOb) elOb.value = currentWaTemplates.overbook;
+                    if (elAr && document.activeElement !== elAr) elAr.value = currentWaTemplates.adminRefund;
+                    if (elEx && document.activeElement !== elEx) elEx.value = currentWaTemplates.expired;
+
+                    updateAdminWaDisplay(currentAdminWa);
+                    updateGlobalFullSlotButton();
+                }
+                renderSessionGrid();
+                renderGroupLinksTab();
+                updateStats();
+            }, (err) => {
+                console.warn('Realtime sync warning:', err);
+            });
+        }
+
+        // ==================== TAB 1: RENDER GRID SESI (PERSIS ASLI) ====================
+        function renderSessionGrid() {
+            const container = document.getElementById('sessionListGrid');
+            container.innerHTML = '';
+
+            MASTER_SESSIONS.forEach((s) => {
+                const isHidden = currentHidden.some(h => h.time === s.time && h.type === s.type);
+                const isFull = currentFull.some(f => f.time === s.time && f.type === s.type);
+
+                let cardClasses = 'session-ctrl-card';
+                if (isHidden) cardClasses += ' state-hidden';
+                else if (isFull) cardClasses += ' state-full';
+
+                const typeLabel = s.type === 'daily' ? 'DAILY' : 'NIGHT';
+
+                const card = document.createElement('div');
+                card.className = cardClasses;
+                card.innerHTML = `
+                    <div class="session-info">
+                        <div class="session-time-header">
+                            <span class="session-time-num">${s.time}</span>
+                            <span class="tag-pill ${s.type}">${typeLabel}</span>
+                        </div>
+                        <div class="session-sub-price">Rp ${s.price} / slot</div>
+                    </div>
+                    <div class="toggles-group">
+                        <label class="toggle-item hide-opt" title="Centang untuk menyembunyikan dari formulir">
+                            <input type="checkbox" class="chk-hide" data-time="${s.time}" data-type="${s.type}" ${isHidden ? 'checked' : ''} onchange="onToggleChange()">
+                            Sembunyikan
+                        </label>
+                        <label class="toggle-item full-opt" title="Centang untuk menandai slot penuh">
+                            <input type="checkbox" class="chk-full" data-time="${s.time}" data-type="${s.type}" ${isFull ? 'checked' : ''} onchange="onToggleChange()">
+                            Full
+                        </label>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function onToggleChange() {
+            collectCurrentCheckboxes();
+            renderSessionGrid();
+            updateStats();
+        }
+
+        function collectCurrentCheckboxes() {
+            const hidden = [];
+            const full = [];
+
+            document.querySelectorAll('#sessionListGrid .chk-hide').forEach(cb => {
+                if (cb.checked) hidden.push({ time: cb.dataset.time, type: cb.dataset.type });
+            });
+            document.querySelectorAll('#sessionListGrid .chk-full').forEach(cb => {
+                if (cb.checked) full.push({ time: cb.dataset.time, type: cb.dataset.type });
+            });
+
+            currentHidden = hidden;
+            currentFull = full;
+        }
+
+        function updateStats() {
+            const total = MASTER_SESSIONS.length;
+            const hiddenCount = currentHidden.length;
+            const fullCount = currentFull.length;
+            const activeCount = Math.max(0, total - hiddenCount - fullCount);
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statActive').textContent = activeCount;
+            document.getElementById('statFull').textContent = fullCount;
+            document.getElementById('statHidden').textContent = hiddenCount;
+        }
+
+        const DEFAULT_C2_SESSIONS = ['13_00_daily', '14_00_daily', '15_00_daily', '16_00_daily', '23_00_daily'];
+        let activeC2Keys = new Set(DEFAULT_C2_SESSIONS);
+
+        // ==================== TAB 2: RENDER KELOLA LINK GRUP ====================
+        function renderGroupLinksTab() {
+            const container = document.getElementById('groupLinkCardList');
+            container.innerHTML = '';
+
+            MASTER_SESSIONS.forEach((s) => {
+                const key = getSessionKey(s.time, s.type);
+                const currentLinkC1 = currentGroupLinks[key] || '';
+                const currentLinkC2 = currentGroupLinks[`${key}_c2`] || '';
+                const mode = currentGroupLinks[`mode_${key}`] || 'auto';
+                const typeLabel = s.type === 'daily' ? 'DAILY' : 'NIGHT';
+
+                // C2 aktif jika ada di default, ada isinya, atau dibuka manual
+                const hasC2 = activeC2Keys.has(key) || !!currentLinkC2;
+
+                const card = document.createElement('div');
+                card.className = 'group-link-card';
+                card.innerHTML = `
+                    <div class="group-link-card-header">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <span class="session-time-num">${s.time}</span>
+                            <span class="tag-pill ${s.type}">${typeLabel}</span>
+                            <span class="session-sub-price">Sesi ${s.time} WIB</span>
+                        </div>
+                        <div class="c2-controls">
+                            ${hasC2 ? `
+                                <span class="badge-c2-active">Pot C2 aktif</span>
+                                <select class="c2-mode-select" onchange="onModeChange('${key}', this.value)" title="Pilih Alur Pot C1 / C2">
+                                    <option value="auto" ${mode === 'auto' ? 'selected' : ''}>Auto (C1 &rarr; C2 jika >15 tim)</option>
+                                    <option value="c1" ${mode === 'c1' ? 'selected' : ''}>Paksa C1</option>
+                                    <option value="c2" ${mode === 'c2' ? 'selected' : ''}>Paksa C2</option>
+                                </select>
+                            ` : `
+                                <button type="button" class="btn-enable-c2" onclick="toggleC2('${key}')">+ Buka Pot C2</button>
+                            `}
+                        </div>
+                    </div>
+
+                    <!-- INPUT C1 (UTAMA) -->
+                    <div class="group-input-line">
+                        <span class="input-line-tag c1">C1</span>
+                        <input type="url" 
+                               class="group-link-input" 
+                               id="link_${key}" 
+                               placeholder="https://chat.whatsapp.com/... (Grup Utama)" 
+                               value="${escapeHtml(currentLinkC1)}"
+                               onchange="onLinkInputChange('${key}', this.value)" />
+                        <button type="button" class="btn-test-link" onclick="testGroupLink('${key}')" title="Test buka link C1">
+                            Test link
+                        </button>
+                    </div>
+
+                    <!-- INPUT C2 (JIKA DIAKTIFKAN) -->
+                    ${hasC2 ? `
+                    <div class="group-input-line c2-line">
+                        <span class="input-line-tag c2">C2</span>
+                        <input type="url" 
+                               class="group-link-input" 
+                               id="link_${key}_c2" 
+                               placeholder="https://chat.whatsapp.com/... (Grup Pot C2)" 
+                               value="${escapeHtml(currentLinkC2)}"
+                               onchange="onLinkInputChange('${key}_c2', this.value)" />
+                        <button type="button" class="btn-test-link" onclick="testGroupLink('${key}_c2')" title="Test buka link C2">
+                            Test link
+                        </button>
+                        <button type="button" class="btn-close-c2" onclick="toggleC2('${key}')" title="Tutup / Sembunyikan Pot C2">✕</button>
+                    </div>
+                    ` : ''}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleC2(key) {
+            if (activeC2Keys.has(key)) {
+                if (confirm('Tutup Pot C2 untuk sesi ini? Link C2 yang sudah ada akan disimpan namun disembunyikan.')) {
+                    activeC2Keys.delete(key);
+                    renderGroupLinksTab();
+                }
+            } else {
+                activeC2Keys.add(key);
+                renderGroupLinksTab();
+            }
+        }
+
+        function onModeChange(key, val) {
+            currentGroupLinks[`mode_${key}`] = val;
+        }
+
+        function onLinkInputChange(key, val) {
+            currentGroupLinks[key] = val.trim();
+        }
+
+        function testGroupLink(key) {
+            const input = document.getElementById(`link_${key}`);
+            const url = input ? input.value.trim() : (currentGroupLinks[key] || '');
+            if (!url) {
+                alert('Belum ada link yang dimasukkan untuk sesi ini!');
+                return;
+            }
+            window.open(url, '_blank');
+        }
+
+        function applyBulkGroupLink() {
+            const bulkUrl = document.getElementById('bulkGroupLinkInput').value.trim();
+            if (!bulkUrl) {
+                alert('Silakan masukkan URL link WhatsApp terlebih dahulu!');
+                return;
+            }
+            if (!confirm(`Terapkan link:\n"${bulkUrl}"\nke SEMUA 19 sesi?`)) {
+                return;
+            }
+
+            MASTER_SESSIONS.forEach(s => {
+                const key = getSessionKey(s.time, s.type);
+                currentGroupLinks[key] = bulkUrl;
+                const input = document.getElementById(`link_${key}`);
+                if (input) input.value = bulkUrl;
+            });
+
+            showToast('✅ Link berhasil disalin ke semua sesi! Jangan lupa klik Simpan.', 'success');
+        }
+
+        // ==================== TAB 3: LOAD MONITOR DATA & OMSET ====================
+        let currentMonitorFilter = 'all';
+        let currentSessionFilter = 'all';
+        let currentSearchQuery = '';
+        let cachedRegistrations = [];
+
+        function setMonitorFilter(filter) {
+            currentMonitorFilter = filter;
+            ['all', 'lunas', 'pending', 'c1', 'c2', 'overbook'].forEach(f => {
+                const btn = document.getElementById('filterBtn' + capitalize(f));
+                if (btn) {
+                    if (f === filter) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }
+            });
+            renderRegistrationsTable();
+        }
+
+        function onSessionFilterChange(val) {
+            currentSessionFilter = val;
+            renderRegistrationsTable();
+        }
+
+        function onSearchFilterChange(val) {
+            currentSearchQuery = (val || '').trim();
+            const btnClear = document.getElementById('btnClearSearch');
+            if (btnClear) btnClear.style.display = currentSearchQuery ? 'block' : 'none';
+            renderRegistrationsTable();
+        }
+
+        function clearSearchFilter() {
+            const input = document.getElementById('filterSearchInput');
+            if (input) input.value = '';
+            onSearchFilterChange('');
+        }
+
+        function resetAllMonitorFilters() {
+            currentMonitorFilter = 'all';
+            currentSessionFilter = 'all';
+            currentSearchQuery = '';
+            
+            const sel = document.getElementById('filterSessionSelect');
+            if (sel) sel.value = 'all';
+            
+            const input = document.getElementById('filterSearchInput');
+            if (input) input.value = '';
+            
+            const btnClear = document.getElementById('btnClearSearch');
+            if (btnClear) btnClear.style.display = 'none';
+
+            setMonitorFilter('all');
+        }
+
+        function populateSessionFilterOptions() {
+            const sel = document.getElementById('filterSessionSelect');
+            if (!sel || sel.options.length > 1) return;
+            MASTER_SESSIONS.forEach(s => {
+                const key = getSessionKey(s.time, s.type);
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = `${s.time} WIB (${s.type.toUpperCase()})`;
+                sel.appendChild(opt);
+            });
+        }
+
+        async function loadMonitorData(isManual = false) {
+            try {
+                populateSessionFilterOptions();
+                const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getAdminData&t=${Date.now()}`);
+                if (!res.ok) return;
+                const data = await res.json();
+
+                cachedRegistrations = data.registrations || [];
+                const notifications = data.notifications || [];
+
+                // Hitung Statistik Keuangan
+                let totalUang = 0;
+                let lunasCount = 0;
+                let pendingCount = 0;
+
+                cachedRegistrations.forEach(r => {
+                    const st = String(r.status || '').toUpperCase();
+                    if (st === 'LUNAS') {
+                        totalUang += parseInt(r.totalPrice, 10) || 0;
+                        lunasCount++;
+                    } else {
+                        pendingCount++;
+                    }
+                });
+
+                document.getElementById('monTotalUang').textContent = `Rp ${totalUang.toLocaleString('id-ID')}`;
+                document.getElementById('monTotalLunas').textContent = lunasCount;
+                document.getElementById('monTotalPending').textContent = pendingCount;
+
+                // Render Tabel Registrasi dengan Deteksi C1, C2 & Overbook
+                renderRegistrationsTable();
+
+                // Render Tabel Notifikasi DANA
+                const tbodyNotif = document.getElementById('tbodyNotifications');
+                if (notifications.length === 0) {
+                    tbodyNotif.innerHTML = `<tr><td colspan="5" class="empty-cell">Belum ada notifikasi DANA yang diterima.</td></tr>`;
+                } else {
+                    tbodyNotif.innerHTML = notifications.map(n => {
+                        let dateStr = '-';
+                        if (n.time) {
+                            try {
+                                const d = new Date(n.time);
+                                dateStr = isNaN(d.getTime()) ? String(n.time) : d.toLocaleString('id-ID');
+                            } catch(e) {
+                                dateStr = String(n.time);
+                            }
+                        }
+
+                        const isMatch = String(n.status || '').toUpperCase().includes('MATCH');
+                        const statusBadge = isMatch 
+                            ? `<span class="badge-status lunas">Match · Lunas</span>`
+                            : `<span class="badge-status pending">Unmatched</span>`;
+
+                        // Hubungkan Info Kode Scrim dengan Nama Tim & Kapten
+                        let infoHtml = `<span class="muted">—</span>`;
+                        if (n.info) {
+                            const trimmedInfo = String(n.info).trim();
+                            const matchedReg = cachedRegistrations.find(r => 
+                                String(r.transactionId || '').trim().toUpperCase() === trimmedInfo.toUpperCase()
+                            );
+                            if (matchedReg) {
+                                infoHtml = `<span class="code">${escapeHtml(trimmedInfo)}</span> <span class="muted" style="margin-left:6px;">${escapeHtml(matchedReg.teamName)} · ${escapeHtml(matchedReg.captainNick)}</span>`;
+                            } else {
+                                infoHtml = `<span style="color:${isMatch ? 'var(--text)' : 'var(--danger-text)'};">${escapeHtml(trimmedInfo)}</span>`;
+                            }
+                        }
+
+                        return `
+                            <tr>
+                                <td class="muted">${dateStr}</td>
+                                <td class="amount in">+ Rp ${(parseInt(n.nominal,10)||0).toLocaleString('id-ID')}</td>
+                                <td class="msg-cell">${escapeHtml(n.text)}</td>
+                                <td>${statusBadge}</td>
+                                <td>${infoHtml}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                if (isManual) {
+                    showToast('✅ Data pendaftar & log DANA berhasil diperbarui!', 'success');
+                }
+            } catch(e) {
+                console.warn('Load monitor data error:', e);
+            }
+        }
+
+        function parseSessionItems(sessString) {
+            if (!sessString) return [];
+            return String(sessString)
+                .split(',')
+                .map(s => s.trim())
+                .filter(Boolean)
+                .map(raw => {
+                    const normalized = raw.replace(':', '.');
+                    const match = normalized.match(/(\d{1,2}\.\d{2})/);
+                    const time = match ? match[1].padStart(5, '0') : raw;
+                    const found = MASTER_SESSIONS.find(ms => ms.time === time);
+                    const type = found ? found.type : (normalized.toLowerCase().includes('night') ? 'night' : 'daily');
+                    const key = getSessionKey(found ? found.time : time, type);
+                    const label = `${found ? found.time : time} ${type.toUpperCase()}`;
+                    return { raw, time: found ? found.time : time, type, key, label };
+                });
+        }
+
+        function renderRegistrationsTable() {
+            const tbodyReg = document.getElementById('tbodyRegistrations');
+            if (!tbodyReg) return;
+
+            if (cachedRegistrations.length === 0) {
+                tbodyReg.innerHTML = `<tr><td colspan="11" class="empty-cell">Belum ada pendaftar di sheet DATA.</td></tr>`;
+                document.getElementById('countFilterAll').textContent = '0';
+                document.getElementById('countFilterLunas').textContent = '0';
+                document.getElementById('countFilterOverbook').textContent = '0';
+                return;
+            }
+
+            // Hitung ranking lunas per sesi (kronologis dari lama ke baru)
+            const chronological = [...cachedRegistrations].reverse();
+            const sessionLunasCounts = {};
+            const regAllocationMap = new Map();
+
+            chronological.forEach(r => {
+                const isLunas = String(r.status || '').toUpperCase() === 'LUNAS';
+                if (!isLunas) return;
+
+                const items = parseSessionItems(r.sessions);
+                const ranks = [];
+
+                items.forEach(item => {
+                    const count = (sessionLunasCounts[item.key] || 0) + 1;
+                    sessionLunasCounts[item.key] = count;
+
+                    // Cek apakah ada C2 aktif untuk sesi ini
+                    const currentLinkC2 = currentGroupLinks[`${item.key}_c2`];
+                    const hasC2 = activeC2Keys.has(item.key) || !!currentLinkC2;
+
+                    let potType = 'c1';
+                    if (count <= 15) {
+                        potType = 'c1';
+                    } else if (count <= 30 && hasC2) {
+                        potType = 'c2';
+                    } else {
+                        potType = 'overbook';
+                    }
+
+                    ranks.push({
+                        time: item.time,
+                        type: item.type,
+                        label: item.label,
+                        rank: count,
+                        potType: potType
+                    });
+                });
+
+                regAllocationMap.set(r.transactionId, ranks);
+            });
+
+            let countAll = cachedRegistrations.length;
+            let countLunas = 0;
+            let countPending = 0;
+            let countC1 = 0;
+            let countC2 = 0;
+            let countOverbook = 0;
+
+            const enriched = cachedRegistrations.map(r => {
+                const isLunas = String(r.status || '').toUpperCase() === 'LUNAS';
+                if (isLunas) countLunas++;
+                else countPending++;
+
+                const ranks = regAllocationMap.get(r.transactionId) || [];
+                const hasC1 = ranks.some(x => x.potType === 'c1');
+                const hasC2 = ranks.some(x => x.potType === 'c2');
+                const hasOverbook = ranks.some(x => x.potType === 'overbook');
+
+                if (hasC1) countC1++;
+                if (hasC2) countC2++;
+                if (hasOverbook) countOverbook++;
+
+                let potBadgeHtml = `<span class="muted">—</span>`;
+                if (isLunas && ranks.length > 0) {
+                    const c1Ranks = ranks.filter(x => x.potType === 'c1');
+                    const c2Ranks = ranks.filter(x => x.potType === 'c2');
+                    const overbookRanks = ranks.filter(x => x.potType === 'overbook');
+
+                    const tooltipText = ranks.map(x => {
+                        const pName = x.potType === 'c1' ? 'Pot C1' : (x.potType === 'c2' ? 'Pot C2' : 'OVERBOOK');
+                        return `${x.label}: ${pName} (Slot #${x.rank})`;
+                    }).join('\n');
+
+                    const badges = [];
+                    if (c1Ranks.length > 0) {
+                        const rankNums = c1Ranks.map(x => `#${x.rank}`).join(', ');
+                        badges.push(`<span class="badge-pot c1" title="${escapeHtml(tooltipText)}">C1 ${rankNums}</span>`);
+                    }
+                    if (c2Ranks.length > 0) {
+                        const rankNums = c2Ranks.map(x => `#${x.rank}`).join(', ');
+                        badges.push(`<span class="badge-pot c2" title="${escapeHtml(tooltipText)}">C2 ${rankNums}</span>`);
+                    }
+                    if (overbookRanks.length > 0) {
+                        const rankNums = overbookRanks.map(x => `#${x.rank}`).join(', ');
+                        badges.push(`<span class="badge-pot overbook" title="${escapeHtml(tooltipText)}">Overbook ${rankNums}</span>`);
+                    }
+
+                    potBadgeHtml = badges.join(' ');
+                }
+
+                const sessionItems = parseSessionItems(r.sessions);
+
+                return { ...r, ranks, sessionItems, hasC1, hasC2, hasOverbook, potBadgeHtml, isLunas };
+            });
+
+            // Update badge counters
+            const elAll = document.getElementById('countFilterAll');
+            const elLunas = document.getElementById('countFilterLunas');
+            const elPending = document.getElementById('countFilterPending');
+            const elC1 = document.getElementById('countFilterC1');
+            const elC2 = document.getElementById('countFilterC2');
+            const elOverbook = document.getElementById('countFilterOverbook');
+            if (elAll) elAll.textContent = countAll;
+            if (elLunas) elLunas.textContent = countLunas;
+            if (elPending) elPending.textContent = countPending;
+            if (elC1) elC1.textContent = countC1;
+            if (elC2) elC2.textContent = countC2;
+            if (elOverbook) elOverbook.textContent = countOverbook;
+
+            // Filter data sesuai kriteria lengkap (Pill Status/Pot + Sesi Jam + Search Box)
+            let filtered = enriched.filter(r => {
+                // 1. Filter Status / Pot Pill
+                if (currentMonitorFilter === 'lunas' && !r.isLunas) return false;
+                if (currentMonitorFilter === 'pending' && r.isLunas) return false;
+                if (currentMonitorFilter === 'c1' && !r.hasC1) return false;
+                if (currentMonitorFilter === 'c2' && !r.hasC2) return false;
+                if (currentMonitorFilter === 'overbook' && !r.hasOverbook) return false;
+
+                // 2. Filter Sesi Jam
+                if (currentSessionFilter !== 'all') {
+                    const matchSession = (r.sessionItems || []).some(s => s.key === currentSessionFilter || s.time === currentSessionFilter);
+                    if (!matchSession) return false;
+                }
+
+                // 3. Filter Search Query
+                if (currentSearchQuery) {
+                    const q = currentSearchQuery.toLowerCase();
+                    const matchSearch =
+                        String(r.teamName || '').toLowerCase().includes(q) ||
+                        String(r.captainNick || '').toLowerCase().includes(q) ||
+                        String(r.whatsapp || '').includes(q) ||
+                        String(r.transactionId || '').toLowerCase().includes(q) ||
+                        String(r.sessions || '').toLowerCase().includes(q);
+                    if (!matchSearch) return false;
+                }
+
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbodyReg.innerHTML = `<tr><td colspan="11" class="empty-cell">Tidak ada data yang cocok dengan filter.<a href="javascript:void(0)" onclick="resetAllMonitorFilters()">Reset filter</a></td></tr>`;
+                return;
+            }
+
+            tbodyReg.innerHTML = filtered.map(r => {
+                const badgeClass = r.isLunas ? 'lunas' : 'pending';
+                const dateStr = r.time ? new Date(r.time).toLocaleString('id-ID') : '-';
+                const logoHtml = r.logo && String(r.logo).startsWith('http')
+                    ? `<a href="${escapeHtml(r.logo)}" target="_blank" class="link-chip">Lihat ↗</a>`
+                    : `<span class="muted">—</span>`;
+
+                let actionHtml = `<span class="muted">—</span>`;
+                if (r.hasOverbook) {
+                    const obSess = (r.ranks || []).filter(x => x.potType === 'overbook').map(x => `${x.label} (#${x.rank})`).join(', ');
+                    const tpl = currentWaTemplates.adminRefund || DEFAULT_WA_TEMPLATES.adminRefund;
+                    const refundMsg = formatWaTemplate(tpl, {
+                        teamName: r.teamName,
+                        sessions: obSess || r.sessions,
+                        transactionId: r.transactionId,
+                        totalPrice: (parseInt(r.totalPrice,10)||0).toLocaleString('id-ID')
+                    });
+                    const waUrl = `https://wa.me/${escapeHtml(r.whatsapp).replace(/[^0-9]/g,'')}?text=${encodeURIComponent(refundMsg)}`;
+                    actionHtml = `<a href="${waUrl}" target="_blank" class="btn-chat-overbook-admin">Chat refund</a>`;
+                }
+
+                return `
+                    <tr>
+                        <td class="muted">${dateStr}</td>
+                        <td><span class="code">${escapeHtml(r.transactionId)}</span></td>
+                        <td class="team">${escapeHtml(r.teamName)}</td>
+                        <td>${logoHtml}</td>
+                        <td>${escapeHtml(r.captainNick)}</td>
+                        <td><a href="https://wa.me/${escapeHtml(r.whatsapp).replace(/[^0-9]/g,'')}" target="_blank" class="wa-link mono">${escapeHtml(r.whatsapp)}</a></td>
+                        <td>${escapeHtml(r.sessions)}</td>
+                        <td>${r.potBadgeHtml}</td>
+                        <td class="amount">Rp ${(parseInt(r.totalPrice,10)||0).toLocaleString('id-ID')}</td>
+                        <td><span class="badge-status ${badgeClass}">${escapeHtml(r.status || 'PENDING')}</span></td>
+                        <td>${actionHtml}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ==================== BULK BUTTONS TAB 1 ====================
+        function resetAllStates() {
+            if (confirm('Buka semua sesi? (Semua tanda Full, Sembunyikan, dan status Full Slot global akan dicopot)')) {
+                currentHidden = [];
+                currentFull = [];
+                isGlobalFullSlot = false;
+                updateGlobalFullSlotButton();
+                renderSessionGrid();
+                updateStats();
+                showToast('Semua sesi dibuka & Full Slot dinonaktifkan. Klik "Simpan Perubahan" untuk menerapkan.', 'info');
+            }
+        }
+
+        function markAllFull() {
+            if (confirm('Tandai SEMUA sesi sebagai FULL?')) {
+                currentFull = MASTER_SESSIONS.map(s => ({ time: s.time, type: s.type }));
+                renderSessionGrid();
+                updateStats();
+                showToast('Semua sesi ditandai FULL. Klik "Simpan Perubahan" untuk menerapkan.', 'info');
+            }
+        }
+
+        function hideAllSessions() {
+            if (confirm('Sembunyikan SEMUA sesi dari formulir pendaftaran?')) {
+                currentHidden = MASTER_SESSIONS.map(s => ({ time: s.time, type: s.type }));
+                renderSessionGrid();
+                updateStats();
+                showToast('Semua sesi disembunyikan. Klik "Simpan Perubahan" untuk menerapkan.', 'info');
+            }
+        }
+
+        function toggleGlobalFullSlot() {
+            if (!isGlobalFullSlot) {
+                if (confirm('Aktifkan mode FULL SLOT?\n\nDi menu pendaftaran akan muncul tulisan "FULL SLOT YAH LANJUT BESOK" dan seluruh formulir ditutup (tidak bisa diisi).')) {
+                    isGlobalFullSlot = true;
+                    updateGlobalFullSlotButton();
+                    showToast('⛔ Full Slot aktif! Klik "Simpan Perubahan" untuk mengunci web pendaftaran.', 'warning');
+                }
+            } else {
+                if (confirm('Buka kembali pendaftaran (nonaktifkan mode FULL SLOT)?')) {
+                    isGlobalFullSlot = false;
+                    updateGlobalFullSlotButton();
+                    showToast('✅ Full Slot dinonaktifkan! Klik "Simpan Perubahan" untuk membuka kembali pendaftaran.', 'success');
+                }
+            }
+        }
+
+        function updateGlobalFullSlotButton() {
+            const btn = document.getElementById('btnToggleGlobalFullSlot');
+            const icon = document.getElementById('gfsBtnIcon');
+            const txt = document.getElementById('gfsBtnText');
+            if (!btn) return;
+            if (isGlobalFullSlot) {
+                btn.classList.add('btn-gfs-active');
+                if (icon) icon.textContent = '🔒';
+                if (txt) txt.textContent = 'FULL SLOT AKTIF (Klik Buka)';
+            } else {
+                btn.classList.remove('btn-gfs-active');
+                if (icon) icon.textContent = '⛔';
+                if (txt) txt.textContent = 'Full Slot';
+            }
+        }
+
+        // ==================== TAB 4: PENGATURAN NOMOR ADMIN ====================
+        function cleanWaNumber(num) {
+            if (!num) return '6285166235006';
+            let clean = String(num).replace(/[^0-9]/g, '');
+            if (clean.startsWith('0')) {
+                clean = '62' + clean.slice(1);
+            } else if (clean.startsWith('8')) {
+                clean = '62' + clean;
+            }
+            return clean || '6285166235006';
+        }
+
+        function formatWaDisplay(num) {
+            const c = cleanWaNumber(num);
+            if (c.startsWith('62') && c.length >= 11) {
+                return `+62 ${c.slice(2, 5)}-${c.slice(5, 9)}-${c.slice(9)}`;
+            }
+            return '+' + c;
+        }
+
+        function updateAdminWaDisplay(num) {
+            const previewEl = document.getElementById('adminWaActivePreview');
+            if (previewEl) {
+                previewEl.textContent = formatWaDisplay(num);
+            }
+        }
+
+        function onAdminWaInputChange(val) {
+            updateAdminWaDisplay(val);
+        }
+
+        function testAdminWaLink() {
+            const input = document.getElementById('adminWaInput');
+            const num = cleanWaNumber(input ? input.value : currentAdminWa);
+            const testMsg = encodeURIComponent('Halo Admin Scrim Papih Gaming, ini tes pesan WhatsApp dari panel admin.');
+            window.open(`https://wa.me/${num}?text=${testMsg}`, '_blank');
+        }
+
+        function formatWaTemplate(tpl, vars) {
+            if (!tpl) return '';
+            let res = tpl;
+            for (const k in vars) {
+                const regex = new RegExp('\\{' + k + '\\}', 'gi');
+                res = res.replace(regex, vars[k] !== undefined ? vars[k] : '');
+            }
+            return res;
+        }
+
+        function insertTag(textareaId, tag) {
+            const el = document.getElementById(textareaId);
+            if (!el) return;
+            const start = el.selectionStart || el.value.length;
+            const end = el.selectionEnd || el.value.length;
+            const val = el.value;
+            el.value = val.substring(0, start) + tag + val.substring(end);
+            el.selectionStart = el.selectionEnd = start + tag.length;
+            el.focus();
+        }
+
+        function resetWaTemplatesToDefault() {
+            if (confirm('Kembalikan semua template kalimat pesan WhatsApp ke teks bawaan?')) {
+                currentWaTemplates = { ...DEFAULT_WA_TEMPLATES };
+                const elOb = document.getElementById('waMsgOverbookInput');
+                const elAr = document.getElementById('waMsgAdminRefundInput');
+                const elEx = document.getElementById('waMsgExpiredInput');
+                if (elOb) elOb.value = DEFAULT_WA_TEMPLATES.overbook;
+                if (elAr) elAr.value = DEFAULT_WA_TEMPLATES.adminRefund;
+                if (elEx) elEx.value = DEFAULT_WA_TEMPLATES.expired;
+                showToast('Kalimat dikembalikan ke standar. Klik Simpan Perubahan untuk menyimpan.', 'info');
+            }
+        }
+
+        // ==================== SAVE TO DATABASE ====================
+        function saveToDatabase() {
+            collectCurrentCheckboxes();
+
+            document.querySelectorAll('.group-link-input').forEach(input => {
+                const key = input.id.replace('link_', '');
+                if (key) {
+                    currentGroupLinks[key] = input.value.trim();
+                }
+            });
+
+            const waInput = document.getElementById('adminWaInput');
+            if (waInput && waInput.value.trim()) {
+                currentAdminWa = cleanWaNumber(waInput.value.trim());
+            }
+
+            const elOb = document.getElementById('waMsgOverbookInput');
+            const elAr = document.getElementById('waMsgAdminRefundInput');
+            const elEx = document.getElementById('waMsgExpiredInput');
+            if (elOb && elOb.value.trim()) currentWaTemplates.overbook = elOb.value.trim();
+            if (elAr && elAr.value.trim()) currentWaTemplates.adminRefund = elAr.value.trim();
+            if (elEx && elEx.value.trim()) currentWaTemplates.expired = elEx.value.trim();
+
+            const btn = document.getElementById('btnSaveDb');
+            const origText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '⏳ Menyimpan ke Database...';
+
+            rtdb.ref('scrim_sessions').set({
+                hidden: currentHidden,
+                full: currentFull,
+                groupLinks: currentGroupLinks,
+                globalFullSlot: isGlobalFullSlot,
+                adminWhatsapp: currentAdminWa,
+                waTemplates: currentWaTemplates,
+                updatedAt: new Date().toISOString()
+            }).then(() => {
+                showToast('✅ Berhasil disimpan! Sesi, Full Slot, Nomor Admin & Kalimat Chat langsung tersinkron.', 'success');
+                updateAdminWaDisplay(currentAdminWa);
+            }).catch((err) => {
+                console.error('Firebase save error:', err);
+                showToast('❌ Gagal menyimpan: ' + err.message, 'error');
+            }).finally(() => {
+                btn.disabled = false;
+                btn.textContent = origText;
+            });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#039;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = String(msg).replace(/^[^A-Za-z0-9(]+\s*/, '');
+            toast.className = 'toast ' + type + ' show';
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3500);
+        }
+
+        // Inisialisasi dropdown filter sesi
+        populateSessionFilterOptions();
+    </script>
+</body>
+</html>

@@ -1,0 +1,3734 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrasi Scrim Papih Gaming</title>
+    <!-- QR Code Generator JS (Local Canvas) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Firebase SDK (Realtime Database) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a14;
+            --bg-secondary: #12122a;
+            --bg-card: #1a1a3e;
+            --bg-card-hover: #222255;
+            --accent: #ff4444;
+            --accent-glow: #ff6b35;
+            --accent-blue: #4d7cff;
+            --gold: #ffd700;
+            --gold-glow: rgba(255, 215, 0, 0.4);
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0d0;
+            --text-muted: #8888aa;
+            --border-color: #2a2a5a;
+            --success: #00f076;
+            --success-glow: rgba(0, 240, 118, 0.4);
+            --error: #ff5252;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 40px rgba(255, 68, 68, 0.3);
+            --radius: 16px;
+            --radius-sm: 8px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        /* ==================== MODE CERAH (LIGHT THEME) ==================== */
+        body.light-theme {
+            --bg-primary: #f0f4f9;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f8fafc;
+            --accent: #ff4444;
+            --accent-glow: #ff6b35;
+            --accent-blue: #2563eb;
+            --gold: #d97706;
+            --gold-glow: rgba(217, 119, 6, 0.25);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.3);
+            --error: #ef4444;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+            --shadow-glow: 0 10px 30px rgba(255, 68, 68, 0.12);
+            background: #f0f4f9 !important;
+            background-image:
+                radial-gradient(ellipse at 10% 20%, rgba(255, 68, 68, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 90% 80%, rgba(37, 99, 235, 0.05) 0%, transparent 50%) !important;
+        }
+
+        body.light-theme .card {
+            background: #ffffff;
+            border-color: #e2e8f0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+        body.light-theme .session-card {
+            background: #ffffff;
+            border-color: #e2e8f0;
+        }
+        body.light-theme #infoDaily {
+            background: linear-gradient(165deg, #f0f6ff 0%, #e2eeff 100%);
+            border-color: #93c5fd;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.08);
+        }
+        body.light-theme #infoDaily:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.16);
+        }
+        body.light-theme #infoDaily .session-price {
+            color: #1d4ed8;
+        }
+        body.light-theme #infoDaily .session-pool-box {
+            background: #dbeafe;
+            border-color: #bfdbfe;
+            color: #1e40af;
+        }
+        body.light-theme #infoNight {
+            background: linear-gradient(165deg, #fffbeb 0%, #fef3c7 100%);
+            border-color: #fcd34d;
+            box-shadow: 0 4px 14px rgba(217, 119, 6, 0.08);
+        }
+        body.light-theme #infoNight:hover {
+            border-color: #f59e0b;
+            box-shadow: 0 6px 20px rgba(217, 119, 6, 0.16);
+        }
+        body.light-theme #infoNight .session-price {
+            color: #b45309;
+            text-shadow: none;
+        }
+        body.light-theme #infoNight .session-pool-box {
+            background: #fef3c7;
+            border-color: #fde68a;
+            color: #92400e;
+        }
+        body.light-theme .session-time-item {
+            background: #ffffff;
+            border-color: #e2e8f0;
+        }
+        body.light-theme .session-time-item:hover {
+            border-color: #cbd5e1;
+        }
+        body.light-theme .session-time-item .time-badge {
+            color: #0f172a;
+        }
+        body.light-theme .session-time-item.selected {
+            border-color: var(--accent);
+            background: #fff1f2;
+            box-shadow: 0 0 15px rgba(255, 68, 68, 0.12);
+        }
+        body.light-theme .session-time-item.selected .time-badge {
+            color: var(--accent);
+        }
+        body.light-theme .session-time-item .check-icon {
+            border-color: #cbd5e1;
+        }
+        body.light-theme .info-note {
+            background: #fefce8;
+            border-color: #fef08a;
+            color: #854d0e;
+        }
+        body.light-theme .form-input {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            color: #0f172a;
+        }
+        body.light-theme .form-input:focus {
+            background: #ffffff;
+            border-color: var(--accent);
+        }
+        body.light-theme .total-display {
+            background: #fff7ed;
+            border-color: #fdba74;
+        }
+        body.light-theme .total-display .amount {
+            color: #ea580c;
+        }
+        body.light-theme .step-dot {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            color: #64748b;
+        }
+        body.light-theme .step-dot.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #ffffff;
+        }
+        body.light-theme .step-line {
+            background: #cbd5e1;
+        }
+        body.light-theme .header h1 {
+            background: linear-gradient(135deg, #0f172a 0%, #ea580c 55%, #ff4444 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        body.light-theme .btn-secondary {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            color: #0f172a;
+        }
+        body.light-theme .success-box {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+        body.light-theme .success-row:not(:last-child) {
+            border-bottom-color: #e2e8f0;
+        }
+        body.light-theme .transaction-id {
+            background: #fefce8;
+            border-color: #f59e0b;
+            color: #b45309;
+        }
+        body.light-theme .transaction-id .copy-btn {
+            border-color: #f59e0b;
+            color: #b45309;
+        }
+        body.light-theme .waiting-pill {
+            background: #fefce8;
+            border-color: #fef08a;
+            color: #b45309;
+        }
+        body.light-theme .waiting-pill .spinner-small {
+            border-color: rgba(180, 83, 9, 0.25);
+            border-top-color: #b45309;
+        }
+        body.light-theme .step3-session-item {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+        body.light-theme .step3-session-url {
+            background: #e2e8f0;
+            color: #334155;
+        }
+        body.light-theme .btn-copy-link {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            color: #0f172a;
+        }
+        body.light-theme .btn-copy-link:hover {
+            background: #f1f5f9;
+        }
+
+        /* TOP CONTROLS (LANGUAGE & THEME) */
+        .top-nav-bar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+            position: relative;
+            z-index: 100;
+        }
+        .top-pill-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-card);
+            border: 1.5px solid var(--border-color);
+            border-radius: 50px;
+            padding: 6px 14px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 700;
+            transition: all var(--transition);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+            user-select: none;
+            outline: none;
+        }
+        .top-pill-btn:hover {
+            border-color: rgba(255, 255, 255, 0.35);
+            transform: translateY(-1px);
+        }
+        .theme-toggle-btn {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 1.05rem;
+        }
+        body.light-theme .top-pill-btn {
+            background: #ffffff;
+            border-color: #e2e8f0;
+            color: #0f172a;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        body.light-theme .top-pill-btn:hover {
+            border-color: #cbd5e1;
+        }
+        .lang-dropdown-wrapper {
+            position: relative;
+        }
+        .lang-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: #151833;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            padding: 6px;
+            width: 175px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            z-index: 9999;
+            backdrop-filter: blur(12px);
+            animation: fadeInDown 0.2s ease forwards;
+        }
+        .lang-dropdown-menu.show {
+            display: flex;
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .lang-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: #cbd5e1;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+        .lang-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+        .lang-item.active {
+            background: #ff4444;
+            color: #fff;
+            font-weight: 800;
+            box-shadow: 0 4px 12px rgba(255, 68, 68, 0.35);
+        }
+        .lang-item .flag {
+            font-size: 1.05rem;
+            line-height: 1;
+        }
+        body.light-theme .lang-dropdown-menu {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+        }
+        body.light-theme .lang-item {
+            color: #334155;
+        }
+        body.light-theme .lang-item:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+        body.light-theme .lang-item.active {
+            background: #ff4444;
+            color: #ffffff;
+        }
+
+        html, body {
+            overscroll-behavior-y: contain;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse at 10% 20%, rgba(255, 68, 68, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 90% 80%, rgba(77, 124, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(255, 215, 0, 0.03) 0%, transparent 70%);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            line-height: 1.6;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        input, textarea {
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            -ms-user-select: text !important;
+            user-select: text !important;
+        }
+
+        .container { width: 100%; max-width: 720px; margin: 0 auto; position: relative; }
+
+        /* STEP INDICATOR */
+        .step-indicator { display: flex; justify-content: center; align-items: center; gap: 0; margin-bottom: 30px; position: relative; }
+        .step-dot {
+            width: 48px; height: 48px; border-radius: 50%;
+            background: var(--bg-card); border: 3px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 1.1rem; color: var(--text-muted);
+            transition: all var(--transition); position: relative; z-index: 2;
+            font-family: 'Courier New', monospace;
+        }
+        .step-dot.active {
+            background: var(--accent); border-color: var(--accent); color: #fff;
+            box-shadow: 0 0 30px rgba(255, 68, 68, 0.5); animation: pulse-glow 2s infinite;
+        }
+        .step-dot.completed { background: var(--success); border-color: var(--success); color: #000; font-weight: 900; }
+        .step-line { flex: 1; max-width: 120px; height: 4px; background: var(--border-color); border-radius: 2px; transition: all var(--transition); }
+        .step-line.completed { background: var(--success); }
+        .step-label {
+            position: absolute; bottom: -28px; font-size: 0.7rem;
+            text-transform: uppercase; letter-spacing: 1px;
+            color: var(--text-muted); white-space: nowrap; font-weight: 600;
+        }
+        .step-label.active { color: var(--accent); }
+        .step-label.completed { color: var(--success); }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 30px rgba(255, 68, 68, 0.5); }
+            50% { box-shadow: 0 0 50px rgba(255, 68, 68, 0.8); }
+        }
+
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: var(--radius); padding: 32px 28px;
+            box-shadow: var(--shadow); backdrop-filter: blur(10px); transition: all var(--transition);
+        }
+        .card:hover { border-color: rgba(255, 68, 68, 0.3); box-shadow: var(--shadow-glow); }
+
+        .header { text-align: center; margin-bottom: 28px; }
+        .header .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent), var(--accent-glow));
+            color: #fff; padding: 6px 20px; border-radius: 50px;
+            font-size: 0.75rem; font-weight: 700; letter-spacing: 2px;
+            text-transform: uppercase; margin-bottom: 12px;
+            box-shadow: 0 4px 20px rgba(255, 68, 68, 0.4);
+        }
+        .header h1 {
+            font-size: 1.8rem; font-weight: 900; letter-spacing: 1px;
+            background: linear-gradient(135deg, #ffffff 0%, #ffd700 50%, #ff4444 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; line-height: 1.2; text-transform: uppercase;
+        }
+        .header .subtitle { color: var(--text-secondary); font-size: 0.9rem; margin-top: 6px; }
+
+        .session-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .session-card {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 14px 12px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+            transition: all var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .session-card:hover {
+            transform: translateY(-2px);
+        }
+        #infoDaily {
+            background: linear-gradient(165deg, rgba(77, 124, 255, 0.12) 0%, rgba(18, 18, 42, 0.9) 100%);
+            border: 1.5px solid rgba(77, 124, 255, 0.35);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+        }
+        #infoDaily:hover {
+            border-color: rgba(77, 124, 255, 0.65);
+            box-shadow: 0 6px 24px rgba(77, 124, 255, 0.25);
+        }
+        #infoNight {
+            background: linear-gradient(165deg, rgba(255, 215, 0, 0.12) 0%, rgba(28, 22, 16, 0.9) 100%);
+            border: 1.5px solid rgba(255, 215, 0, 0.4);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+        }
+        #infoNight:hover {
+            border-color: rgba(255, 215, 0, 0.75);
+            box-shadow: 0 6px 24px rgba(255, 215, 0, 0.28);
+        }
+        .session-card .session-type {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: 50px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+        .session-card .session-type.daily {
+            background: rgba(77, 124, 255, 0.2);
+            color: #8cb2ff;
+            border: 1px solid rgba(77, 124, 255, 0.4);
+        }
+        .session-card .session-type.night {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+            border: 1px solid rgba(255, 215, 0, 0.45);
+        }
+        .session-card .session-price {
+            font-size: 1.35rem;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+        #infoNight .session-price {
+            color: #ffd700;
+            text-shadow: 0 0 16px rgba(255, 215, 0, 0.35);
+        }
+        .session-card .session-price span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        #infoNight .session-price span {
+            color: rgba(255, 215, 0, 0.7);
+        }
+        .session-pool-box {
+            width: 100%;
+            border-radius: 6px;
+            padding: 5px 8px;
+            margin-top: 6px;
+            font-size: 0.72rem;
+            line-height: 1.35;
+        }
+        #infoDaily .session-pool-box {
+            background: rgba(77, 124, 255, 0.08);
+            border: 1px solid rgba(77, 124, 255, 0.2);
+            color: #b5caff;
+        }
+        #infoNight .session-pool-box {
+            background: rgba(255, 215, 0, 0.08);
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            color: #ffe680;
+        }
+
+        .session-times { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
+        .session-time-item {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--bg-secondary); border: 2px solid var(--border-color);
+            border-radius: var(--radius-sm); padding: 12px 14px;
+            cursor: pointer; transition: all var(--transition); user-select: none;
+        }
+        .session-time-item:hover { border-color: rgba(255, 255, 255, 0.25); }
+        .session-time-item.selected {
+            border-color: var(--accent); background: rgba(255, 68, 68, 0.08);
+            box-shadow: 0 0 20px rgba(255, 68, 68, 0.15);
+        }
+        .session-time-item .time-badge {
+            font-weight: 800; font-size: 0.95rem; letter-spacing: 0.5px;
+            min-width: 55px; color: #fff;
+        }
+        .session-time-item .tag {
+            font-size: 0.6rem; text-transform: uppercase; font-weight: 700;
+            letter-spacing: 0.5px; padding: 2px 8px; border-radius: 50px; white-space: nowrap;
+        }
+        .session-time-item .tag.daily { background: rgba(77, 124, 255, 0.2); color: #7da3ff; }
+        .session-time-item .tag.night { background: rgba(255, 215, 0, 0.2); color: var(--gold); }
+        .session-time-item .price-tag { margin-left: auto; font-weight: 700; font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; }
+        .session-time-item .check-icon {
+            width: 20px; height: 20px; border: 2px solid var(--text-muted);
+            border-radius: 4px; display: flex; align-items: center; justify-content: center;
+            font-size: 0.6rem; transition: all var(--transition); flex-shrink: 0;
+        }
+        .session-time-item.selected .check-icon { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+        /* Sesi FULL */
+        .session-time-item.full {
+            opacity: 0.55; cursor: not-allowed;
+            border-color: rgba(255, 82, 82, 0.5);
+            background: rgba(255, 82, 82, 0.05);
+        }
+        .session-time-item.full:hover { border-color: rgba(255, 82, 82, 0.5); }
+        .session-time-item.full .price-tag { font-size: 0; color: var(--error); }
+        .session-time-item.full .price-tag::before {
+            content: 'FULL'; font-size: 0.85rem; font-weight: 800; letter-spacing: 1px;
+        }
+        .session-time-item.full .check-icon { opacity: 0.3; border-color: var(--error); }
+
+        .info-note {
+            background: rgba(255, 215, 0, 0.08); border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: var(--radius-sm); padding: 12px 16px; font-size: 0.85rem;
+            color: var(--gold); display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+        }
+        .info-note .icon { font-size: 1.2rem; flex-shrink: 0; }
+
+        .form-group {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            line-height: 1.2;
+        }
+        .form-group label .required { color: var(--accent); }
+        .form-input {
+            width: 100%;
+            height: 48px;
+            padding: 0 14px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 0.92rem;
+            transition: all var(--transition);
+            outline: none;
+            font-family: inherit;
+            box-sizing: border-box;
+            line-height: normal;
+        }
+        .form-input:hover {
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+        .form-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(255, 68, 68, 0.2);
+            background: rgba(255, 68, 68, 0.03);
+        }
+        .form-input::placeholder { color: var(--text-muted); font-size: 0.85rem; }
+        .form-input.error { border-color: var(--error); box-shadow: 0 0 20px rgba(255, 82, 82, 0.2); }
+        .error-message { font-size: 0.75rem; color: var(--error); margin-top: 4px; display: none; }
+        .error-message.show { display: block; animation: fadeIn 0.3s ease; }
+
+        .session-times.error {
+            border: 1.5px dashed var(--error) !important;
+            border-radius: var(--radius-sm);
+            padding: 8px;
+            background: rgba(255, 68, 68, 0.04);
+        }
+
+        @keyframes fieldShake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .field-shake {
+            animation: fieldShake 0.45s ease-in-out;
+        }
+
+        /* FLOATING TOAST NOTIFICATION */
+        .toast {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-70px);
+            background: rgba(21, 22, 51, 0.95);
+            backdrop-filter: blur(12px);
+            color: #fff;
+            padding: 13px 26px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            border: 1.5px solid var(--border-color);
+            z-index: 999999;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .toast.error {
+            background: linear-gradient(135deg, rgba(69, 10, 10, 0.96), rgba(127, 29, 29, 0.96));
+            border-color: #ef4444;
+            color: #fecaca;
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.35);
+        }
+        .toast.success {
+            background: linear-gradient(135deg, rgba(6, 78, 59, 0.96), rgba(4, 120, 87, 0.96));
+            border-color: #10b981;
+            color: #a7f3d0;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.35);
+        }
+
+        .total-display {
+            background: linear-gradient(135deg, rgba(255, 68, 68, 0.1), rgba(255, 215, 0, 0.05));
+            border: 2px solid rgba(255, 68, 68, 0.3); border-radius: var(--radius-sm);
+            padding: 16px 20px; display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 20px;
+        }
+        .total-display .label { font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; }
+        .total-display .amount { font-size: 1.5rem; font-weight: 900; color: var(--gold); letter-spacing: 0.5px; }
+
+        .btn {
+            width: 100%; padding: 16px 24px; border: none; border-radius: var(--radius-sm);
+            font-size: 1rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 1.5px; cursor: pointer; transition: all var(--transition);
+            position: relative; overflow: hidden; font-family: inherit;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-glow));
+            color: #fff; box-shadow: 0 8px 30px rgba(255, 68, 68, 0.4);
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(255, 68, 68, 0.6);
+            background: linear-gradient(135deg, #ff5555, #ff7b45);
+        }
+        .btn-green {
+            background: linear-gradient(135deg, #00f076, #00a854);
+            color: #000; font-weight: 900; box-shadow: 0 8px 30px rgba(0, 240, 118, 0.4);
+        }
+        .btn-green:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0, 240, 118, 0.6); filter: brightness(1.1); }
+        .btn-secondary {
+            background: var(--bg-secondary); color: var(--text-primary);
+            border: 2px solid var(--border-color); box-shadow: none;
+        }
+        .btn-secondary:hover { border-color: var(--text-muted); transform: translateY(-2px); }
+        .btn-disabled {
+            background: #1c1d30 !important; color: #555770 !important;
+            border: 1px solid #2a2c48 !important; cursor: not-allowed !important;
+            box-shadow: none !important; transform: none !important;
+        }
+
+        /* CLEAN QRIS CONTAINER & INTERACTIVE STAGE */
+        .qris-clean-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 12px 0 6px;
+            position: relative;
+            min-height: 250px;
+        }
+        .qris-pure-frame {
+            background: #ffffff;
+            padding: 14px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid rgba(255, 255, 255, 0.85);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+        }
+        .qris-pure-frame.fade-out {
+            transform: scale(0.82);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .qris-pure-frame canvas, .qris-pure-frame img {
+            display: block;
+            margin: 0 auto;
+            border-radius: 6px;
+        }
+
+        /* FINTECH / DANA STYLE PAYMENT SUCCESS CARD */
+        .payment-success-card {
+            background: linear-gradient(145deg, rgba(16, 185, 129, 0.18) 0%, rgba(5, 150, 105, 0.08) 100%);
+            border: 2px solid #10b981;
+            border-radius: 20px;
+            padding: 22px 18px;
+            text-align: center;
+            box-shadow: 0 0 35px rgba(16, 185, 129, 0.35);
+            animation: successPopIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            width: 250px;
+            margin: 0 auto;
+        }
+        @keyframes successPopIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .success-top-label {
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #34d399;
+            margin-bottom: 12px;
+        }
+        .success-check-circle {
+            width: 62px;
+            height: 62px;
+            border-radius: 50%;
+            background: #10b981;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.6);
+            animation: pulseGlow 1.8s infinite;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
+            50% { box-shadow: 0 0 35px rgba(16, 185, 129, 0.85); }
+        }
+        .checkmark-svg {
+            width: 36px;
+            height: 36px;
+            stroke: #ffffff;
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .checkmark-circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 3;
+            stroke: #ffffff;
+            fill: none;
+            animation: strokeCircle 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+        .checkmark-check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: strokeCheck 0.35s cubic-bezier(0.65, 0, 0.45, 1) 0.3s forwards;
+        }
+        @keyframes strokeCircle { 100% { stroke-dashoffset: 0; } }
+        @keyframes strokeCheck { 100% { stroke-dashoffset: 0; } }
+
+        .success-amount-text {
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+        .success-subtitle-text {
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #6ee7b7;
+            text-transform: uppercase;
+        }
+
+        /* MENUNGGU PEMBAYARAN KECIL DI BAWAH QRIS */
+        .waiting-pill-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 8px 0 10px;
+        }
+        .waiting-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 215, 0, 0.08);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 50px;
+            padding: 6px 14px;
+            color: var(--gold);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            transition: all 0.3s ease;
+        }
+        .spinner-small {
+            width: 13px;
+            height: 13px;
+            border: 2px solid rgba(255, 215, 0, 0.25);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* NOMINAL PEMBAYARAN BERSIH TANPA KOTAK */
+        .payment-amount-clean {
+            text-align: center;
+            margin: 6px 0 14px;
+            padding: 0;
+            background: none;
+            border: none;
+        }
+        .payment-amount-clean .label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+        }
+        .payment-amount-clean .amount {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--gold);
+            letter-spacing: 1px;
+            margin: 3px 0;
+            text-shadow: 0 0 25px var(--gold-glow);
+        }
+        .discount-badge {
+            display: inline-block;
+            background: rgba(0, 240, 118, 0.12);
+            color: var(--success);
+            border: 1px solid rgba(0, 240, 118, 0.3);
+            border-radius: 20px;
+            padding: 3px 12px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .transaction-id {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            background: rgba(255, 215, 0, 0.08); border: 1px dashed rgba(255, 215, 0, 0.5);
+            border-radius: var(--radius-sm); padding: 8px 14px; margin-bottom: 16px;
+            font-family: 'Courier New', monospace; font-size: 1.05rem; font-weight: 700;
+            color: var(--gold); letter-spacing: 2px;
+        }
+        .transaction-id .copy-btn {
+            background: none; border: 1px solid rgba(255, 215, 0, 0.4);
+            color: var(--gold); padding: 3px 9px; border-radius: 4px;
+            cursor: pointer; font-size: 0.7rem; transition: all var(--transition);
+            font-family: inherit;
+        }
+        .transaction-id .copy-btn:hover { background: rgba(255, 215, 0, 0.15); }
+
+        /* STEP 3 GROUP ACCESS SECTION */
+        .step3-group-card {
+            background: linear-gradient(135deg, rgba(0, 240, 118, 0.08) 0%, rgba(255, 215, 0, 0.05) 100%);
+            border: 1.5px solid rgba(0, 240, 118, 0.35);
+            border-radius: var(--radius);
+            padding: 18px 16px;
+            margin-bottom: 18px;
+            text-align: left;
+            box-shadow: 0 0 25px rgba(0, 240, 118, 0.12);
+        }
+        .step3-group-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .step3-session-item {
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .step3-session-name {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--gold);
+        }
+        .step3-session-url {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: rgba(0, 0, 0, 0.25);
+            padding: 6px 10px;
+            border-radius: 6px;
+            word-break: break-all;
+            font-family: monospace;
+        }
+        .step3-session-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .btn-copy-link {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 7px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-family: inherit;
+        }
+        .btn-copy-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        .btn-popup-link {
+            background: linear-gradient(135deg, #25d366, #128c7e);
+            color: #fff;
+            padding: 7px 14px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 2px 10px rgba(37, 211, 102, 0.35);
+        }
+        .btn-popup-link:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        /* 5-MINUTE PAYMENT COUNTDOWN TIMER */
+        .payment-timer-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 12px;
+        }
+        .timer-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 215, 0, 0.08);
+            border: 1px solid rgba(255, 215, 0, 0.35);
+            border-radius: 50px;
+            padding: 7px 18px;
+            color: #ffffff;
+            font-size: 0.85rem;
+            font-weight: 700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+        .timer-digits {
+            font-family: 'Courier New', monospace;
+            font-size: 1.15rem;
+            font-weight: 900;
+            color: var(--gold);
+            letter-spacing: 1px;
+        }
+        .timer-pill.timer-urgent {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: #ef4444;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+            animation: pulseUrgent 1s infinite alternate;
+        }
+        .timer-pill.timer-urgent .timer-digits {
+            color: #ef4444;
+        }
+        @keyframes pulseUrgent {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.04); }
+        }
+
+        /* EXPIRED PAYMENT CARD IN STEP 2 */
+        .payment-expired-card {
+            background: linear-gradient(145deg, rgba(239, 68, 68, 0.18) 0%, rgba(185, 28, 28, 0.08) 100%);
+            border: 2px solid #ef4444;
+            border-radius: 20px;
+            padding: 24px 18px;
+            text-align: center;
+            box-shadow: 0 0 35px rgba(239, 68, 68, 0.35);
+            animation: successPopIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            width: 270px;
+            margin: 0 auto;
+        }
+        .expired-top-label {
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #fca5a5;
+            margin-bottom: 8px;
+        }
+        .expired-icon-circle {
+            font-size: 2.8rem;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        .expired-title-text {
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .expired-subtitle-text {
+            font-size: 0.75rem;
+            color: #fecaca;
+            line-height: 1.4;
+            margin-bottom: 16px;
+        }
+
+        /* OVERBOOK / FULL SLOT ALERT CARD IN STEP 3 */
+        .overbook-card {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(220, 38, 38, 0.1) 100%);
+            border: 2px solid #f59e0b;
+            border-radius: var(--radius);
+            padding: 18px 16px;
+            margin-bottom: 18px;
+            text-align: left;
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.25);
+            animation: successPopIn 0.5s ease forwards;
+        }
+        .overbook-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(245, 158, 11, 0.25);
+            color: #fbbf24;
+            border: 1px solid #f59e0b;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+        .overbook-title {
+            font-size: 1.05rem;
+            font-weight: 900;
+            color: #ffffff;
+            line-height: 1.35;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .overbook-desc {
+            font-size: 0.82rem;
+            color: #fef3c7;
+            line-height: 1.45;
+            margin-bottom: 14px;
+        }
+        .overbook-admin-box {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px dashed rgba(245, 158, 11, 0.4);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .overbook-wa-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+        .overbook-wa-number {
+            font-family: 'Courier New', monospace;
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--gold);
+        }
+        .overbook-actions {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+        .btn-chat-admin {
+            flex: 1;
+            background: linear-gradient(135deg, #25d366, #128c7e);
+            color: #ffffff;
+            padding: 11px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.35);
+            transition: all 0.2s;
+        }
+        .btn-chat-admin:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+        .btn-copy-admin-wa {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 11px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .btn-copy-admin-wa:hover {
+            background: rgba(255, 255, 255, 0.18);
+        }
+        .tag-pill-pot {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.68rem;
+            font-weight: 800;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+        .tag-pill-pot.c1 { background: rgba(0, 240, 118, 0.2); color: #00f076; border: 1px solid rgba(0, 240, 118, 0.4); }
+        .tag-pill-pot.c2 { background: rgba(96, 165, 250, 0.2); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.4); }
+
+        /* BRAND LOGO PAPIH GAMING */
+        .logo-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .brand-logo {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255, 68, 68, 0.8);
+            box-shadow: 0 0 25px rgba(255, 68, 68, 0.5), 0 0 50px rgba(251, 191, 36, 0.2);
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+            user-select: none;
+        }
+        .brand-logo:hover {
+            transform: scale(1.06);
+            box-shadow: 0 0 35px rgba(255, 68, 68, 0.8), 0 0 60px rgba(251, 191, 36, 0.35);
+        }
+
+        .step-content { display: none; animation: fadeIn 0.4s ease; }
+        .step-content.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            70% { transform: scale(1.03); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* SUCCESS BOX */
+        .success-box {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm); padding: 14px 18px; margin-bottom: 20px;
+            text-align: left;
+        }
+        .success-row {
+            display: flex; justify-content: space-between; align-items: center; padding: 8px 0;
+        }
+        .success-row:not(:last-child) {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .success-label { color: var(--text-secondary); font-size: 0.85rem; }
+        .success-val { font-weight: 600; font-size: 0.95rem; }
+
+        /* 2-COLUMN FORM GRID (DESKTOP: RAPIH & SEIMBANG) */
+        .form-grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .form-grid-2col .form-group {
+            margin-bottom: 0;
+            width: 100%;
+        }
+
+        /* LOGO TIM UPLOAD CARD (TINGGI TEPAT 48PX SESUAI INPUT) */
+        .logo-upload-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 5px 10px;
+            height: 48px;
+            width: 100%;
+            box-sizing: border-box;
+            cursor: pointer;
+            transition: all var(--transition);
+            user-select: none;
+            position: relative;
+        }
+        .logo-upload-card:hover {
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+        body.light-theme .logo-upload-card {
+            background: #ffffff;
+            border-color: #cbd5e1;
+        }
+        body.light-theme .logo-upload-card:hover {
+            border-color: #94a3b8;
+        }
+        .logo-upload-card.error {
+            border-color: var(--error) !important;
+            box-shadow: 0 0 20px rgba(255, 82, 82, 0.2) !important;
+            background: rgba(255, 82, 82, 0.05) !important;
+        }
+        .logo-box-left {
+            width: 34px;
+            height: 34px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        body.light-theme .logo-box-left {
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+        }
+        .logo-icon-svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--text-muted);
+        }
+        .logo-box-left img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+        .logo-box-center {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: left;
+        }
+        .logo-box-title {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+        }
+        .logo-box-sub {
+            font-size: 0.58rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+            margin-top: 2px;
+        }
+        .logo-box-right {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-pilih-logo {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: var(--text-primary);
+            padding: 5px 11px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .btn-pilih-logo:hover {
+            background: rgba(255, 255, 255, 0.18);
+        }
+        body.light-theme .btn-pilih-logo {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            color: #0f172a;
+        }
+        body.light-theme .btn-pilih-logo:hover {
+            background: #e2e8f0;
+        }
+        .btn-remove-logo-inline {
+            background: rgba(255, 68, 68, 0.15);
+            border: 1px solid rgba(255, 68, 68, 0.35);
+            color: #ff5252;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        @media (max-width: 640px) {
+            html, body {
+                width: 100% !important;
+                overflow-x: hidden !important;
+            }
+            body {
+                padding: 4px 4px 24px 4px !important;
+            }
+            .container {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .card {
+                width: 100% !important;
+                padding: 16px 12px !important;
+                border-radius: 14px !important;
+                box-sizing: border-box !important;
+            }
+            .header h1 { font-size: 1.3rem; }
+
+            /* DI HP DIBUAT FULL LAYAR: KOTAK NAMA TIM, LOGO TIM, NICK, NO WA MELEBAR PENUH */
+            .form-grid-2col {
+                grid-template-columns: 1fr !important;
+                gap: 12px !important;
+                margin-bottom: 12px !important;
+                width: 100% !important;
+            }
+            .form-grid-2col .form-group {
+                margin-bottom: 0 !important;
+                width: 100% !important;
+            }
+            .form-input {
+                font-size: 0.9rem !important;
+                height: 48px !important;
+                padding: 0 12px !important;
+                width: 100% !important;
+            }
+            .logo-upload-card {
+                height: 48px !important;
+                padding: 5px 10px !important;
+                width: 100% !important;
+            }
+            .logo-box-title {
+                font-size: 0.82rem !important;
+            }
+            .logo-box-sub {
+                font-size: 0.62rem !important;
+            }
+            .session-cards { grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+            .session-card { padding: 10px 8px; }
+            .session-card .session-type { font-size: 0.62rem; padding: 3px 8px; letter-spacing: 0.5px; margin-bottom: 6px; }
+            .session-card .session-price { font-size: 1.12rem; margin-bottom: 2px; }
+            .session-card .session-price span { font-size: 0.68rem; }
+            .session-pool-box { font-size: 0.66rem; padding: 4px 6px; margin-top: 4px; }
+            .session-times { grid-template-columns: repeat(2, 1fr) !important; gap: 6px !important; }
+            .session-time-item { padding: 9px 8px; gap: 4px; justify-content: space-between; }
+            .step-dot { width: 34px; height: 34px; font-size: 0.8rem; }
+            .step-line { max-width: 28px; }
+            .payment-amount-display .amount, .payment-amount-clean .amount { font-size: 2.1rem !important; }
+        }
+
+        /* ==================== GLOBAL FULL SLOT LOCK STYLES ==================== */
+        .form-locked-global-fullslot .card {
+            border-color: rgba(255, 68, 68, 0.4) !important;
+            box-shadow: 0 0 25px rgba(255, 68, 68, 0.15) !important;
+        }
+        .form-locked-global-fullslot input,
+        .form-locked-global-fullslot .session-time-item,
+        .form-locked-global-fullslot .logo-upload-card,
+        .form-locked-global-fullslot .btn:not(.top-pill-btn) {
+            cursor: not-allowed !important;
+            opacity: 0.55;
+            filter: grayscale(0.5);
+            pointer-events: none !important;
+        }
+        .global-fullslot-banner {
+            background: linear-gradient(135deg, rgba(255, 68, 68, 0.22) 0%, rgba(26, 26, 62, 0.95) 100%);
+            border: 2px solid #ff4444;
+            box-shadow: 0 0 25px rgba(255, 68, 68, 0.4), inset 0 0 15px rgba(255, 68, 68, 0.15);
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin: 16px 0 20px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            animation: pulseFullSlot 2s infinite ease-in-out;
+        }
+        @keyframes pulseFullSlot {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 68, 68, 0.35); }
+            50% { box-shadow: 0 0 35px rgba(255, 68, 68, 0.65); }
+        }
+        .global-fullslot-banner::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, #ff4444, #ffd700, #ff4444);
+        }
+        .global-fullslot-banner .gfs-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 68, 68, 0.25);
+            border: 1px solid #ff4444;
+            color: #ff6b6b;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .global-fullslot-banner .gfs-title {
+            font-size: 1.35rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            color: #ffffff;
+            text-shadow: 0 0 16px rgba(255, 68, 68, 0.8), 0 2px 4px rgba(0,0,0,0.8);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .global-fullslot-banner .gfs-desc {
+            font-size: 0.88rem;
+            color: #e2e8f0;
+            line-height: 1.5;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+        .btn-locked-fullslot {
+            background: linear-gradient(135deg, #7f1d1d, #450a0a) !important;
+            border: 1px solid #ff4444 !important;
+            color: #fca5a5 !important;
+            box-shadow: 0 0 15px rgba(255, 68, 68, 0.3) !important;
+            cursor: not-allowed !important;
+            pointer-events: none !important;
+            opacity: 0.92 !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- FLOATING TOAST NOTIFICATION -->
+    <div class="toast" id="toast"></div>
+
+    <div class="container" id="appContainer">
+        <!-- TOP CONTROLS: MULTI-LANGUAGE SELECTOR & THEME TOGGLE -->
+        <div class="top-nav-bar">
+            <!-- Language Dropdown -->
+            <div class="lang-dropdown-wrapper" id="langDropdownWrapper">
+                <button type="button" class="top-pill-btn" id="langDropdownBtn" onclick="toggleLangDropdown(event)">
+                    <span>🌐</span>
+                    <span id="currentLangLabel">ID</span>
+                    <span style="font-size:0.6rem;opacity:0.8;">▼</span>
+                </button>
+                <div class="lang-dropdown-menu" id="langDropdownMenu">
+                    <div class="lang-item active" data-lang="id" onclick="changeLanguage('id')">
+                        <span class="flag">🇮🇩</span> Indonesia
+                    </div>
+                    <div class="lang-item" data-lang="en" onclick="changeLanguage('en')">
+                        <span class="flag">🇬🇧</span> English
+                    </div>
+                    <div class="lang-item" data-lang="pt" onclick="changeLanguage('pt')">
+                        <span class="flag">🇧🇷</span> Português
+                    </div>
+                    <div class="lang-item" data-lang="th" onclick="changeLanguage('th')">
+                        <span class="flag">🇹🇭</span> ไทย (Thai)
+                    </div>
+                    <div class="lang-item" data-lang="vi" onclick="changeLanguage('vi')">
+                        <span class="flag">🇻🇳</span> Tiếng Việt
+                    </div>
+                    <div class="lang-item" data-lang="es" onclick="changeLanguage('es')">
+                        <span class="flag">🇪🇸</span> Español
+                    </div>
+                    <div class="lang-item" data-lang="ar" onclick="changeLanguage('ar')">
+                        <span class="flag">🇸🇦</span> العربية
+                    </div>
+                </div>
+            </div>
+
+            <!-- Theme Toggle Button -->
+            <button type="button" class="top-pill-btn theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Mode Cerah / Gelap">
+                <span id="themeIcon">🌙</span>
+            </button>
+        </div>
+
+        <!-- STEP INDICATOR -->
+        <div class="step-indicator" id="stepIndicator">
+            <div style="display:flex;align-items:center;gap:0;position:relative;">
+                <div class="step-dot active" id="stepDot1">1</div>
+                <span class="step-label active" style="position:static;margin:0 6px;font-size:0.65rem;" id="stepLabel1">Registrasi</span>
+                <div class="step-line" id="stepLine1"></div>
+                <div class="step-dot" id="stepDot2">2</div>
+                <span class="step-label" style="position:static;margin:0 6px;font-size:0.65rem;" id="stepLabel2">Pembayaran</span>
+                <div class="step-line" id="stepLine2"></div>
+                <div class="step-dot" id="stepDot3">3</div>
+                <span class="step-label" style="position:static;margin:0 6px;font-size:0.65rem;" id="stepLabel3">Selesai</span>
+            </div>
+        </div>
+
+        <!-- STEP 1: FORMULIR PENDAFTARAN -->
+        <div class="step-content active" id="step1">
+            <div class="card">
+                <div class="header">
+                    <div class="logo-wrapper">
+                        <img src="logo.jpg" alt="Papih Gaming" class="brand-logo" id="brandLogo" title="Papih Gaming (Klik 5x untuk Admin)" />
+                    </div>
+                    <div class="badge" id="headerBadge">🔥 Daily Scrim Papih Gaming</div>
+                    <h1 id="headerTitle">Registrasi Scrim<br />Papih Gaming</h1>
+                    <p class="subtitle" id="headerSubtitle">Pilih sesi & isi data tim kamu dengan benar</p>
+                </div>
+
+                <!-- GLOBAL FULL SLOT LOCK BANNER (Lanjut Besok) -->
+                <div id="globalFullSlotBanner" class="global-fullslot-banner" style="display:none;">
+                    <div class="gfs-badge">⛔ PENDAFTARAN DITUTUP</div>
+                    <div class="gfs-title">FULL SLOT YAH LANJUT BESOK</div>
+                    <div class="gfs-desc">Mohon maaf, seluruh kuota sesi pendaftaran scrim hari ini sudah penuh. Pendaftaran ditutup dan semua formulir dinonaktifkan. Silakan bergabung kembali besok!</div>
+                </div>
+
+                <div class="session-cards">
+                    <div class="session-card" id="infoDaily">
+                        <div class="session-type daily" id="infoDailyType">⚡ DAILY SCRIM</div>
+                        <div class="session-price"><span id="infoDailyPrice">Rp 5.000</span> <span id="infoDailyPer">/ sesi</span></div>
+                        <div class="session-pool-box" id="infoDailyPool">Pool Prize: Rp 35.000<br />+ Challenge</div>
+                    </div>
+                    <div class="session-card" id="infoNight">
+                        <div class="session-type night" id="infoNightType">🌙 NIGHT SCRIM</div>
+                        <div class="session-price"><span id="infoNightPrice">Rp 10.000</span> <span id="infoNightPer">/ sesi</span></div>
+                        <div class="session-pool-box" id="infoNightPool">Pool Prize: Rp 100.000<br />+ Challenge</div>
+                    </div>
+                </div>
+
+                <div class="info-note">
+                    <span class="icon">📌</span>
+                    <span id="infoNoteText"><strong>Boleh daftar lebih dari 1 sesi!</strong> Pilih semua sesi yang kamu inginkan.</span>
+                </div>
+
+                <!-- BARIS 1: NAMA TIM (KIRI) & LOGO TIM (KANAN) -->
+                <div class="form-grid-2col">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label id="lblTeamName">Nama Tim <span class="required">*</span></label>
+                        <input type="text" class="form-input" id="teamName" placeholder="Masukkan nama tim..." autocomplete="off" />
+                        <div class="error-message" id="teamNameError">Wajib diisi!</div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label id="lblTeamLogo">Logo Tim <span class="required">*</span></label>
+                        <div class="logo-upload-card" id="logoUploadCard" onclick="triggerLogoFileInput()">
+                            <div class="logo-box-left" id="logoBoxLeft">
+                                <svg class="logo-icon-svg" id="logoIconSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                                    <circle cx="9" cy="9" r="2"/>
+                                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                                </svg>
+                                <img id="logoPreviewThumbnail" src="" alt="Logo Tim" style="display:none;" />
+                            </div>
+                            <div class="logo-box-center">
+                                <div class="logo-box-title" id="logoTitleText">Upload Logo Tim</div>
+                                <div class="logo-box-sub" id="logoSubText">Format PNG/JPG (Maks 5 MB) - Tampil HD di data</div>
+                            </div>
+                            <div class="logo-box-right">
+                                <button type="button" class="btn-pilih-logo" id="btnPilihLogo" onclick="triggerLogoFileInput()">Pilih</button>
+                                <button type="button" class="btn-remove-logo-inline" id="btnRemoveLogoInline" onclick="event.stopPropagation(); removeSelectedLogo();" style="display:none;" title="Hapus Logo">✕</button>
+                            </div>
+                        </div>
+                        <input type="file" id="teamLogoInput" accept="image/*" style="display:none;" onchange="handleLogoFileSelect(event)" />
+                        <div class="error-message" id="teamLogoError">Logo tim wajib diunggah!</div>
+                    </div>
+                </div>
+
+                <!-- BARIS 2: NICK KAPTEN (KIRI) & NOMOR WA (KANAN) -->
+                <div class="form-grid-2col">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label id="lblCaptainNick">Nick Kapten <span class="required">*</span></label>
+                        <input type="text" class="form-input" id="captainNick" placeholder="Masukkan nick kapten..." autocomplete="off" />
+                        <div class="error-message" id="captainNickError">Wajib diisi!</div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label id="lblWhatsapp">Nomor WhatsApp <span class="required">*</span></label>
+                        <input type="tel" class="form-input" id="whatsappNumber" placeholder="Contoh: 081234567890" autocomplete="off" maxlength="16" />
+                        <div class="error-message" id="whatsappError">Format WA salah!</div>
+                    </div>
+                </div>
+
+                <!-- 19 Sesi Master Papih Gaming (Lengkap & Utuh) -->
+                <div class="form-group">
+                    <label id="lblSelectSession">Pilih Sesi <span class="required">*</span></label>
+                    <div class="session-times" id="sessionTimesContainer">
+                        <div class="session-time-item" data-time="10.00" data-type="daily" data-price="5000">
+                            <span class="check-icon">✓</span><span class="time-badge">10.00</span>
+                            <span class="tag daily">DAILY SCRIM</span><span class="price-tag">5K</span>
+                        </div>
+                        <div class="session-time-item" data-time="11.00" data-type="daily" data-price="5000">
+                            <span class="check-icon">✓</span><span class="time-badge">11.00</span>
+                            <span class="tag daily">DAILY SCRIM</span><span class="price-tag">5K</span>
+                        </div>
+                        <div class="session-time-item" data-time="12.00" data-type="daily" data-price="5000">
+                            <span class="check-icon">✓</span><span class="time-badge">12.00</span>
+                            <span class="tag daily">DAILY SCRIM</span><span class="price-tag">5K</span>
+                        </div>
+                        <div class="session-time-item" data-time="13.00" data-type="daily" data-price="5000">
+                            <span class="check-icon">✓</span><span class="time-badge">13.00</span>
+                            <span class="tag daily">DAILY SCRIM</span><span class="price-tag">5K</span>
+                        </div>
+                        <div class="session-time-item" data-time="14.00" data-type="daily" data-price="5000">
+                            <span class="check-icon">✓</span><span class="time-badge">14.00</span>
+                            <span class="tag daily">DAILY SCRIM</span><span class="price-tag">5K</span>
+                        </div>
+                        <div class="session-time-item" data-time="15.00" data-type="daily" data-price="5000">
+                            <span class="check-icon">✓</span><span class="time-badge">15.00</span>
+                            <span class="tag daily">DAILY SCRIM</span><span class="price-tag">5K</span>
+                        </div>
+                        <div class="session-time-item" data-time="16.00" data-type="daily" data-price="5000">
+                            <span class="check-icon">✓</span><span class="time-badge">16.00</span>
+                            <span class="tag daily">DAILY SCRIM</span><span class="price-tag">5K</span>
+                        </div>
+                        <div class="session-time-item" data-time="17.00" data-type="daily" data-price="5000">
+                            <span class="check-icon">✓</span><span class="time-badge">17.00</span>
+                            <span class="tag daily">DAILY SCRIM</span><span class="price-tag">5K</span>
+                        </div>
+                        <div class="session-time-item" data-time="19.00" data-type="daily" data-price="5000">
+                            <span class="check-icon">✓</span><span class="time-badge">19.00</span>
+                            <span class="tag daily">DAILY SCRIM</span><span class="price-tag">5K</span>
+                        </div>
+                        <div class="session-time-item" data-time="19.00" data-type="night" data-price="10000">
+                            <span class="check-icon">✓</span><span class="time-badge">19.00</span>
+                            <span class="tag night">NIGHT SCRIM</span><span class="price-tag">10K</span>
+                        </div>
+                        <div class="session-time-item" data-time="20.00" data-type="daily" data-price="5000">
+                            <span class="check-icon">✓</span><span class="time-badge">20.00</span>
+                            <span class="tag daily">DAILY SCRIM</span><span class="price-tag">5K</span>
+                        </div>
+                        <div class="session-time-item" data-time="20.00" data-type="night" data-price="10000">
+                            <span class="check-icon">✓</span><span class="time-badge">20.00</span>
+                            <span class="tag night">NIGHT SCRIM</span><span class="price-tag">10K</span>
+                        </div>
+                        <div class="session-time-item" data-time="21.00" data-type="daily" data-price="5000">
+                            <span class="check-icon">✓</span><span class="time-badge">21.00</span>
+                            <span class="tag daily">DAILY SCRIM</span><span class="price-tag">5K</span>
+                        </div>
+                        <div class="session-time-item" data-time="21.00" data-type="night" data-price="10000">
+                            <span class="check-icon">✓</span><span class="time-badge">21.00</span>
+                            <span class="tag night">NIGHT SCRIM</span><span class="price-tag">10K</span>
+                        </div>
+                        <div class="session-time-item" data-time="22.00" data-type="daily" data-price="5000">
+                            <span class="check-icon">✓</span><span class="time-badge">22.00</span>
+                            <span class="tag daily">DAILY SCRIM</span><span class="price-tag">5K</span>
+                        </div>
+                        <div class="session-time-item" data-time="22.00" data-type="night" data-price="10000">
+                            <span class="check-icon">✓</span><span class="time-badge">22.00</span>
+                            <span class="tag night">NIGHT SCRIM</span><span class="price-tag">10K</span>
+                        </div>
+                        <div class="session-time-item" data-time="23.00" data-type="daily" data-price="5000">
+                            <span class="check-icon">✓</span><span class="time-badge">23.00</span>
+                            <span class="tag daily">DAILY SCRIM</span><span class="price-tag">5K</span>
+                        </div>
+                        <div class="session-time-item" data-time="00.00" data-type="daily" data-price="5000">
+                            <span class="check-icon">✓</span><span class="time-badge">00.00</span>
+                            <span class="tag daily">DAILY SCRIM</span><span class="price-tag">5K</span>
+                        </div>
+                        <div class="session-time-item" data-time="01.00" data-type="daily" data-price="5000">
+                            <span class="check-icon">✓</span><span class="time-badge">01.00</span>
+                            <span class="tag daily">DAILY SCRIM</span><span class="price-tag">5K</span>
+                        </div>
+                    </div>
+                    <div class="error-message" id="sessionError" style="margin-top:6px;">Minimal pilih 1 sesi!</div>
+                </div>
+
+                <div class="total-display">
+                    <span class="label">💰 Total Biaya Sesi</span>
+                    <span class="amount" id="totalAmountDisplay">Rp 0</span>
+                </div>
+
+                <button class="btn btn-primary" id="btnRegister" onclick="goToPayment()">
+                    Daftar & Lanjut Bayar ➜
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 2: PEMBAYARAN QRIS DINAMIS BERSIH + DETEKSI OTOMATIS -->
+        <div class="step-content" id="step2">
+            <div class="card">
+                <div class="header" style="margin-bottom:12px;">
+                    <div class="badge">💳 Pembayaran Otomatis</div>
+                    <h1 style="font-size:1.45rem;">Scan QRIS Untuk Bayar</h1>
+                    <p class="subtitle" style="margin-bottom:10px;">Buka DANA, GoPay, ShopeePay, BCA, atau M-Banking kamu</p>
+                </div>
+
+                <!-- 5-MINUTE PAYMENT COUNTDOWN TIMER -->
+                <div class="payment-timer-wrapper" id="paymentTimerWrapper">
+                    <div class="timer-pill" id="paymentTimerPill">
+                        <span class="timer-icon">⏱️</span>
+                        <span class="timer-label">Sisa Waktu Bayar:</span>
+                        <span class="timer-digits" id="paymentTimerDigits">05:00</span>
+                    </div>
+                </div>
+
+                <!-- QRIS INTERACTIVE STAGE & SUCCESS FINTECH ANIMATION -->
+                <div class="qris-clean-container">
+                    <div class="qris-pure-frame" id="qrisCanvasFrame">
+                        <div id="qrcodeBox"></div>
+                    </div>
+
+                    <!-- FINTECH DANA STYLE SUCCESS CARD (MUNCUL MENGGANTIKAN QRIS SAAT LUNAS) -->
+                    <div class="payment-success-card" id="qrisSuccessCard" style="display:none;">
+                        <div class="success-top-label">PEMBAYARAN BERHASIL</div>
+                        <div class="success-check-circle">
+                            <svg class="checkmark-svg" viewBox="0 0 52 52">
+                                <circle class="checkmark-circle" cx="26" cy="26" r="23" fill="none"/>
+                                <path class="checkmark-check" fill="none" d="M14 27l8 8 16-16"/>
+                            </svg>
+                        </div>
+                        <div class="success-amount-text" id="successAmountText">Rp 0</div>
+                        <div class="success-subtitle-text">LUNAS &amp; TERVERIFIKASI</div>
+                    </div>
+
+                    <!-- EXPIRED CARD (MUNCUL JIKA WAKTU 5 MENIT HABIS) -->
+                    <div class="payment-expired-card" id="qrisExpiredCard" style="display:none;">
+                        <div class="expired-top-label">WAKTU PEMBAYARAN HABIS</div>
+                        <div class="expired-icon-circle">⏳</div>
+                        <div class="expired-title-text">KEDALUWARSA</div>
+                        <div class="expired-subtitle-text">Batas waktu transfer 5 menit telah berakhir. Slot Anda telah dilepas agar dapat digunakan oleh tim lain.</div>
+                        <div class="expired-action-btns">
+                            <button type="button" class="btn btn-primary" onclick="restartRegistration()" style="width:100%;margin-bottom:8px;padding:12px;font-weight:800;">
+                                🔄 Daftar Ulang
+                            </button>
+                            <a href="https://wa.me/6285166235006" id="btnExpiredWaLink" target="_blank" class="btn btn-secondary" style="width:100%;font-size:0.8rem;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px;">
+                                💬 Sudah Transfer? Chat Admin
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MENUNGGU PEMBAYARAN KECIL & BULAT DI BAWAH QRIS -->
+                <div class="waiting-pill-wrapper" id="waitingWrapper">
+                    <div class="waiting-pill" id="paymentStatusBox">
+                        <span class="spinner-small" id="statusSpinner"></span>
+                        <span id="statusTitle">Menunggu Pembayaran...</span>
+                    </div>
+                </div>
+
+                <!-- DISPLAY NOMINAL BERSIH TANPA KOTAK -->
+                <div class="payment-amount-clean">
+                    <div class="label">Nominal Pembayaran</div>
+                    <div class="amount" id="paymentAmountDisplay">Rp 0</div>
+                    <div class="discount-badge" id="discountBadge">🎉 Potongan Diskon: Hemat Rp 0</div>
+                </div>
+
+                <!-- KODE TRANSAKSI SCRIM -->
+                <div class="transaction-id">
+                    <span id="transactionIdDisplay">SCRIM-0000</span>
+                    <button class="copy-btn" onclick="copyTransactionId()">📋 Copy</button>
+                </div>
+
+                <!-- TOMBOL KEMBALI KE STEP 1 -->
+                <div style="display:flex;gap:10px;justify-content:center;margin-top:12px;">
+                    <button class="btn btn-secondary" onclick="goBackToStep1()">
+                        ← Kembali
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3: SELESAI & AKSES LINK GRUP SESI -->
+        <div class="step-content" id="step3">
+            <div class="card" style="text-align:center;">
+                <div class="header">
+                    <span style="font-size:3.2rem;display:block;margin-bottom:6px;">🎉</span>
+                    <h1 style="font-size:1.5rem;color:var(--success);">Pembayaran Berhasil!</h1>
+                    <p class="subtitle">Pendaftaran Scrim kamu telah resmi tercatat di database sistem.</p>
+                </div>
+
+                <div class="success-box">
+                    <div class="success-row">
+                        <span class="success-label">Status:</span>
+                        <span class="success-val" style="color:var(--success);font-weight:800;">✅ LUNAS (TERVERIFIKASI)</span>
+                    </div>
+                    <div class="success-row">
+                        <span class="success-label">Kode Scrim:</span>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span id="step3TransactionId" style="font-family:'Courier New',monospace;font-size:1.05rem;font-weight:700;color:var(--gold);letter-spacing:1px;">SCRIM-0000</span>
+                            <button class="copy-btn" onclick="copyTransactionId()">📋 Copy</button>
+                        </div>
+                    </div>
+                    <div class="success-row">
+                        <span class="success-label">Nama Tim:</span>
+                        <span id="step3TeamName" class="success-val">-</span>
+                    </div>
+                    <div class="success-row">
+                        <span class="success-label">Nick Kapten:</span>
+                        <span id="step3CaptainNick" class="success-val">-</span>
+                    </div>
+                    <div class="success-row">
+                        <span class="success-label">Sesi Dipilih:</span>
+                        <span id="step3Sessions" class="success-val" style="color:var(--gold);text-align:right;">-</span>
+                    </div>
+                    <div class="success-row">
+                        <span class="success-label">Total Dibayar:</span>
+                        <span id="step3Total" class="success-val" style="color:var(--gold);font-size:1.15rem;font-weight:900;">Rp 0</span>
+                    </div>
+                </div>
+
+                <!-- LINK GRUP RESMI SESI (KHUSUS TAHAP 3) -->
+                <div class="step3-group-card">
+                    <div class="step3-group-header">
+                        <span style="font-size:1.6rem;">📲</span>
+                        <div>
+                            <div style="font-size:1.05rem;font-weight:800;color:#fff;">LINK GRUP SESI KAMU</div>
+                            <div style="font-size:0.78rem;color:var(--text-muted);">Silakan salin link atau klik Masuk Grup untuk bergabung ke grup turnamen</div>
+                        </div>
+                    </div>
+
+                    <!-- DAFTAR LINK SESI USER -->
+                    <div id="step3GroupSection"></div>
+
+                    <!-- TOMBOL UTAMA: MASUK GRUP LANGSUNG POP-UP -->
+                    <button class="btn btn-green" id="btnStep3MainAction" onclick="openAllGroupLinks()" style="margin-top:14px;padding:14px;font-size:1.1rem;font-weight:800;letter-spacing:0.5px;">
+                        👉 Masuk Grup 📲
+                    </button>
+                </div>
+
+                <button class="btn btn-secondary" onclick="resetAll()" style="margin-top:12px;">
+                    Daftar Sesi Lainnya
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // ==================== KONFIGURASI BACKEND ====================
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzTfUGVc42_wqFYcJAySu2P8AmROGbG-QdFcKpgFOoASvRC41LCBHVhSUl4Absn5NiV/exec';
+        let WA_ADMIN_NUMBER = localStorage.getItem('scrimAdminWa') || '6285166235006';
+        let isGlobalFullSlotActive = localStorage.getItem('scrimGlobalFullSlot') === '1';
+        window.isGlobalFullSlotActive = isGlobalFullSlotActive;
+
+        const DEFAULT_WA_TEMPLATES = {
+            overbook: "Halo Admin, pembayaran saya berhasil namun overbook/full slot. Sesi: {sessions}, Kode Scrim: {transactionId}, Nama Tim: {teamName}, Nominal: Rp {totalPrice}. Mohon info untuk refund/pengalihan sesi ya min.",
+            expired: "Halo Admin, batas waktu pendaftaran 5 menit saya habis namun saya sudah terlanjur transfer. Kode Scrim: {transactionId}, Nominal: Rp {totalPrice}, Tim: {teamName}. Mohon dicek ya min."
+        };
+        let currentWaTemplates = { ...DEFAULT_WA_TEMPLATES };
+        try {
+            const savedTpls = localStorage.getItem('scrimWaTemplates');
+            if (savedTpls) {
+                currentWaTemplates = { ...DEFAULT_WA_TEMPLATES, ...JSON.parse(savedTpls) };
+            }
+        } catch(e) {}
+
+        function formatWaTemplate(tpl, vars) {
+            if (!tpl) return '';
+            let res = tpl;
+            for (const k in vars) {
+                const regex = new RegExp('\\{' + k + '\\}', 'gi');
+                res = res.replace(regex, vars[k] !== undefined ? vars[k] : '');
+            }
+            return res;
+        }
+
+        // QRIS Statis Base String (Zona Outdoor - DANA Bisnis 0% fee)
+        const BASE_QRIS = '00020101021126570011ID.DANA.WWW011893600915315721884402091572188440303UMI51440014ID.CO.QRIS.WWW0215ID10210809421340303UMI5204739453033605802ID5912ZONA OUTDOOR6013Kota Makassar61059015463044005';
+
+        // ==================== FIREBASE REALTIME DATABASE ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBp57WGOhmhcCTfQA_kOb3Nh_XZS-9sIww",
+            authDomain: "registrasi-5d8e1.firebaseapp.com",
+            databaseURL: "https://registrasi-5d8e1-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "registrasi-5d8e1",
+            storageBucket: "registrasi-5d8e1.firebasestorage.app",
+            messagingSenderId: "3774493819",
+            appId: "1:3774493819:web:56ded4fef4637095f71ede",
+            measurementId: "G-LDB9SDJWB8"
+        };
+        let rtdb = null;
+        try {
+            if (typeof firebase !== 'undefined') {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                rtdb = firebase.database();
+            }
+        } catch (e) {
+            console.warn('Firebase init error:', e);
+        }
+
+        // ==================== STATE ====================
+        let state = {
+            teamName: '',
+            captainNick: '',
+            whatsappNumber: '',
+            teamLogo: '',
+            selectedSessions: [],
+            baseTotal: 0,
+            discount: 0,
+            finalAmount: 0,
+            transactionId: '',
+            isPaid: false
+        };
+
+        let groupLinksMap = {};
+        let pollingTimer = null;
+
+        // ==================== CRC16 & DYNAMIC QRIS GENERATOR ====================
+        function crc16(data) {
+            let crc = 0xFFFF;
+            for (let i = 0; i < data.length; i++) {
+                crc ^= (data.charCodeAt(i) << 8);
+                for (let j = 0; j < 8; j++) {
+                    crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) : (crc << 1);
+                    crc &= 0xFFFF;
+                }
+            }
+            return crc.toString(16).toUpperCase().padStart(4, '0');
+        }
+
+        function generateDynamicQRIS(qrisStatis, nominal) {
+            let qris = qrisStatis.slice(0, -4);
+            qris = qris.replace("010211", "010212"); // Ubah jadi QRIS Dinamis
+            const nominalStr = nominal.toString();
+            const tag54 = "54" + nominalStr.length.toString().padStart(2, '0') + nominalStr;
+            const pos58 = qris.indexOf("5802ID");
+            const newBody = qris.slice(0, pos58) + tag54 + qris.slice(pos58);
+            return newBody + crc16(newBody);
+        }
+
+        function renderPureQRCode(nominal) {
+            const qrisPayload = generateDynamicQRIS(BASE_QRIS, nominal);
+            const box = document.getElementById('qrcodeBox');
+            box.innerHTML = '';
+
+            let rendered = false;
+            try {
+                if (typeof QRCode !== 'undefined') {
+                    new QRCode(box, {
+                        text: qrisPayload,
+                        width: 220,
+                        height: 220,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                    rendered = true;
+                }
+            } catch (err) {
+                console.warn('QRCode JS error:', err);
+            }
+
+            // Fallback jika library belum load
+            if (!rendered || !box.querySelector('canvas, img')) {
+                box.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrisPayload)}" width="220" height="220" alt="QRIS Code" style="display:block;border-radius:6px;" />`;
+            }
+        }
+
+        // ==================== DOM REFS ====================
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
+        const stepDot1 = document.getElementById('stepDot1');
+        const stepDot2 = document.getElementById('stepDot2');
+        const stepDot3 = document.getElementById('stepDot3');
+        const stepLine1 = document.getElementById('stepLine1');
+        const stepLine2 = document.getElementById('stepLine2');
+        const teamNameInput = document.getElementById('teamName');
+        const captainNickInput = document.getElementById('captainNick');
+        const whatsappInput = document.getElementById('whatsappNumber');
+        const sessionTimesContainer = document.getElementById('sessionTimesContainer');
+        const totalAmountDisplay = document.getElementById('totalAmountDisplay');
+        const paymentAmountDisplay = document.getElementById('paymentAmountDisplay');
+        const discountBadge = document.getElementById('discountBadge');
+        const transactionIdDisplay = document.getElementById('transactionIdDisplay');
+        const paymentStatusBox = document.getElementById('paymentStatusBox');
+        const statusSpinner = document.getElementById('statusSpinner');
+        const statusTitle = document.getElementById('statusTitle');
+        const qrisCanvasFrame = document.getElementById('qrisCanvasFrame');
+        const qrisSuccessCard = document.getElementById('qrisSuccessCard');
+        const waitingWrapper = document.getElementById('waitingWrapper');
+        const successAmountText = document.getElementById('successAmountText');
+
+        // ==================== MODE CERAH & GELAP (THEME TOGGLE) ====================
+        let currentTheme = localStorage.getItem('scrim_theme') || 'dark';
+
+        function applyTheme(theme) {
+            currentTheme = theme;
+            localStorage.setItem('scrim_theme', theme);
+            const iconEl = document.getElementById('themeIcon');
+            if (theme === 'light') {
+                document.body.classList.add('light-theme');
+                if (iconEl) iconEl.textContent = '☀️';
+            } else {
+                document.body.classList.remove('light-theme');
+                if (iconEl) iconEl.textContent = '🌙';
+            }
+        }
+
+        function toggleTheme() {
+            applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        }
+
+        // ==================== MULTI-LANGUAGE SYSTEM ====================
+        const TRANSLATIONS = {
+            id: {
+                code: 'ID',
+                name: 'Indonesia',
+                flag: '🇮🇩',
+                step1: 'Registrasi',
+                step2: 'Pembayaran',
+                step3: 'Selesai',
+                badge: '🔥 Daily Scrim Papih Gaming',
+                title: 'Registrasi Scrim<br />Papih Gaming',
+                subtitle: 'Pilih sesi & isi data tim kamu dengan benar',
+                dailyTitle: '⚡ DAILY SCRIM',
+                dailyPrice: 'Rp 5.000',
+                perSession: '/ sesi',
+                dailyPool: 'Pool Prize: Rp 35.000<br />+ Challenge',
+                nightTitle: '🌙 NIGHT SCRIM',
+                nightPrice: 'Rp 10.000',
+                nightPool: 'Pool Prize: Rp 100.000<br />+ Challenge',
+                infoNote: '<strong>Boleh daftar lebih dari 1 sesi!</strong> Pilih semua sesi yang kamu inginkan.',
+                labelTeamName: 'Nama Tim',
+                phTeamName: 'Masukkan nama tim...',
+                errTeamName: 'Wajib diisi!',
+                labelTeamLogo: 'Logo Tim',
+                logoUploadTitle: 'Upload Logo Tim',
+                logoUploadSub: 'Format PNG/JPG (Maks 5 MB) - Tampil HD di data',
+                logoBtnSelect: 'Pilih',
+                logoBtnChange: 'Ganti',
+                errTeamLogo: 'Logo tim wajib diunggah!',
+                labelCaptainNick: 'Nick Kapten',
+                phCaptainNick: 'Masukkan nick kapten...',
+                errCaptainNick: 'Wajib diisi!',
+                labelWhatsapp: 'Nomor WhatsApp',
+                phWhatsapp: 'Contoh: 081234567890',
+                errWhatsapp: 'Format WA salah!',
+                labelSelectSession: 'Pilih Sesi',
+                errSession: 'Minimal pilih 1 sesi!',
+                labelTotalCost: '💰 Total Pembayaran',
+                btnRegister: 'Daftar & Lanjut Bayar ➜',
+                qrisBadge: '💳 Pembayaran Otomatis',
+                qrisTitle: 'Scan QRIS Untuk Bayar',
+                qrisSubtitle: 'Buka DANA, GoPay, ShopeePay, BCA, atau M-Banking kamu',
+                waitingPayment: 'Menunggu Pembayaran...',
+                nominalPayment: 'Nominal Pembayaran',
+                discountBadge: '🎉 Potongan Diskon: Hemat Rp',
+                copyCode: '📋 Copy',
+                btnBack: '← Kembali',
+                successPayment: 'Pembayaran Berhasil!',
+                successSubtitle: 'Pendaftaran Scrim kamu telah resmi tercatat di database sistem.',
+                statusVerified: '✅ LUNAS (TERVERIFIKASI)',
+                btnJoinGroup: '👉 Masuk Grup',
+                btnCopyLink: '📋 Salin Link',
+                linkCopied: '✅ Tersalin!'
+            },
+            en: {
+                code: 'EN',
+                name: 'English',
+                flag: '🇬🇧',
+                step1: 'Registration',
+                step2: 'Payment',
+                step3: 'Completed',
+                badge: '🔥 Daily Scrim Papih Gaming',
+                title: 'Scrim Registration<br />Papih Gaming',
+                subtitle: 'Select sessions & fill in your team data correctly',
+                dailyTitle: '⚡ DAILY SCRIM',
+                dailyPrice: 'Rp 5,000',
+                perSession: '/ session',
+                dailyPool: 'Pool Prize: Rp 35,000<br />+ Challenge',
+                nightTitle: '🌙 NIGHT SCRIM',
+                nightPrice: 'Rp 10,000',
+                nightPool: 'Pool Prize: Rp 100,000<br />+ Challenge',
+                infoNote: '<strong>You may register for more than 1 session!</strong> Select all sessions you want.',
+                labelTeamName: 'Team Name',
+                phTeamName: 'Enter team name...',
+                errTeamName: 'Required field!',
+                labelTeamLogo: 'Team Logo',
+                logoUploadTitle: 'Upload Team Logo',
+                logoUploadSub: 'PNG/JPG format (Max 5 MB) - Displays HD in data',
+                logoBtnSelect: 'Choose',
+                logoBtnChange: 'Change',
+                errTeamLogo: 'Team logo is required!',
+                labelCaptainNick: 'Captain Nick',
+                phCaptainNick: 'Enter captain nick...',
+                errCaptainNick: 'Required field!',
+                labelWhatsapp: 'WhatsApp Number',
+                phWhatsapp: 'e.g. 081234567890',
+                errWhatsapp: 'Invalid WhatsApp format!',
+                labelSelectSession: 'Select Sessions',
+                errSession: 'Select at least 1 session!',
+                labelTotalCost: '💰 Total Payment',
+                btnRegister: 'Register & Proceed to Pay ➜',
+                qrisBadge: '💳 Automated Payment',
+                qrisTitle: 'Scan QRIS to Pay',
+                qrisSubtitle: 'Open DANA, GoPay, ShopeePay, BCA, or your Mobile Banking',
+                waitingPayment: 'Waiting for Payment...',
+                nominalPayment: 'Payment Amount',
+                discountBadge: '🎉 Discount: Saved Rp',
+                copyCode: '📋 Copy',
+                btnBack: '← Back',
+                successPayment: 'Payment Successful!',
+                successSubtitle: 'Your Scrim registration has been officially recorded in system database.',
+                statusVerified: '✅ PAID (VERIFIED)',
+                btnJoinGroup: '👉 Join Group',
+                btnCopyLink: '📋 Copy Link',
+                linkCopied: '✅ Copied!'
+            },
+            pt: {
+                code: 'PT',
+                name: 'Português',
+                flag: '🇧🇷',
+                step1: 'Inscrição',
+                step2: 'Pagamento',
+                step3: 'Concluído',
+                badge: '🔥 Daily Scrim Papih Gaming',
+                title: 'Inscrição de Scrim<br />Papih Gaming',
+                subtitle: 'Selecione as sessões e preencha os dados do seu time',
+                dailyTitle: '⚡ DAILY SCRIM',
+                dailyPrice: 'Rp 5.000',
+                perSession: '/ sessão',
+                dailyPool: 'Pool Prize: Rp 35.000<br />+ Desafio',
+                nightTitle: '🌙 NIGHT SCRIM',
+                nightPrice: 'Rp 10.000',
+                nightPool: 'Pool Prize: Rp 100.000<br />+ Desafio',
+                infoNote: '<strong>Pode se inscrever em mais de 1 sessão!</strong> Escolha todas que quiser.',
+                labelTeamName: 'Nome do Time',
+                phTeamName: 'Digite o nome do time...',
+                errTeamName: 'Campo obrigatório!',
+                labelTeamLogo: 'Logo do Time',
+                logoUploadTitle: 'Enviar Logo do Time',
+                logoUploadSub: 'Formato PNG/JPG (Máx 5 MB) - Exibe HD',
+                logoBtnSelect: 'Escolher',
+                logoBtnChange: 'Trocar',
+                errTeamLogo: 'O logotipo do time é obrigatório!',
+                labelCaptainNick: 'Nick do Capitão',
+                phCaptainNick: 'Digite o nick do capitão...',
+                errCaptainNick: 'Campo obrigatório!',
+                labelWhatsapp: 'Número do WhatsApp',
+                phWhatsapp: 'Ex: 081234567890',
+                errWhatsapp: 'Formato inválido!',
+                labelSelectSession: 'Escolha a Sessão',
+                errSession: 'Selecione pelo menos 1 sessão!',
+                labelTotalCost: '💰 Pagamento Total',
+                btnRegister: 'Inscrever & Pagar ➜',
+                qrisBadge: '💳 Pagamento Automático',
+                qrisTitle: 'Escanear QRIS para Pagar',
+                qrisSubtitle: 'Abra DANA, GoPay, ShopeePay ou seu Banco',
+                waitingPayment: 'Aguardando Pagamento...',
+                nominalPayment: 'Valor do Pagamento',
+                discountBadge: '🎉 Desconto: Economizou Rp',
+                copyCode: '📋 Copiar',
+                btnBack: '← Voltar',
+                successPayment: 'Pagamento Confirmado!',
+                successSubtitle: 'Sua inscrição foi confirmada no banco de dados.',
+                statusVerified: '✅ PAGO (VERIFICADO)',
+                btnJoinGroup: '👉 Entrar no Grupo',
+                btnCopyLink: '📋 Copiar Link',
+                linkCopied: '✅ Copiado!'
+            },
+            th: {
+                code: 'TH',
+                name: 'ไทย (Thai)',
+                flag: '🇹🇭',
+                step1: 'ลงทะเบียน',
+                step2: 'ชำระเงิน',
+                step3: 'เสร็จสิ้น',
+                badge: '🔥 Daily Scrim Papih Gaming',
+                title: 'ลงทะเบียน Scrim<br />Papih Gaming',
+                subtitle: 'เลือกรอบและกรอกข้อมูลทีมของคุณให้ถูกต้อง',
+                dailyTitle: '⚡ DAILY SCRIM',
+                dailyPrice: 'Rp 5.000',
+                perSession: '/ รอบ',
+                dailyPool: 'เงินรางวัล: Rp 35.000<br />+ ชาเลนจ์',
+                nightTitle: '🌙 NIGHT SCRIM',
+                nightPrice: 'Rp 10.000',
+                nightPool: 'เงินรางวัล: Rp 100.000<br />+ ชาเลนจ์',
+                infoNote: '<strong>ลงทะเบียนได้มากกว่า 1 รอบ!</strong> เลือกรอบทั้งหมดที่คุณต้องการ',
+                labelTeamName: 'ชื่อทีม',
+                phTeamName: 'กรอกชื่อทีมของคุณ...',
+                errTeamName: 'จำเป็นต้องกรอก!',
+                labelTeamLogo: 'โลโก้ทีม',
+                logoUploadTitle: 'อัปโหลดโลโก้ทีม',
+                logoUploadSub: 'ไฟล์ PNG/JPG (สูงสุด 5 MB) - คมชัด HD',
+                logoBtnSelect: 'เลือก',
+                logoBtnChange: 'เปลี่ยน',
+                errTeamLogo: 'กรุณาอัปโหลดโลโก้ทีม!',
+                labelCaptainNick: 'ชื่อกัปตัน',
+                phCaptainNick: 'กรอกชื่อกัปตัน...',
+                errCaptainNick: 'จำเป็นต้องกรอก!',
+                labelWhatsapp: 'เบอร์ WhatsApp',
+                phWhatsapp: 'ตัวอย่าง: 081234567890',
+                errWhatsapp: 'รูปแบบเบอร์ไม่ถูกต้อง!',
+                labelSelectSession: 'เลือกรอบการแข่งขัน',
+                errSession: 'เลือกอย่างน้อย 1 รอบ!',
+                labelTotalCost: '💰 ยอดชำระทั้งหมด',
+                btnRegister: 'ลงทะเบียนและชำระเงิน ➜',
+                qrisBadge: '💳 ชำระเงินอัตโนมัติ',
+                qrisTitle: 'สแกน QRIS เพื่อชำระเงิน',
+                qrisSubtitle: 'เปิดแอป DANA, GoPay, ShopeePay หรือโมบายแบงก์กิ้ง',
+                waitingPayment: 'กำลังรอการชำระเงิน...',
+                nominalPayment: 'ยอดเงินที่ต้องชำระ',
+                discountBadge: '🎉 ส่วนลดพิเศษ: ประหยัด Rp',
+                copyCode: '📋 คัดลอก',
+                btnBack: '← ย้อนกลับ',
+                successPayment: 'ชำระเงินสำเร็จแล้ว!',
+                successSubtitle: 'การลงทะเบียนของคุณได้รับการบันทึกในระบบเรียบร้อยแล้ว',
+                statusVerified: '✅ ชำระแล้ว (ยืนยันแล้ว)',
+                btnJoinGroup: '👉 เข้ากลุ่ม',
+                btnCopyLink: '📋 คัดลอกลิงก์',
+                linkCopied: '✅ คัดลอกแล้ว!'
+            },
+            vi: {
+                code: 'VI',
+                name: 'Tiếng Việt',
+                flag: '🇻🇳',
+                step1: 'Đăng Ký',
+                step2: 'Thanh Toán',
+                step3: 'Hoàn Tất',
+                badge: '🔥 Daily Scrim Papih Gaming',
+                title: 'Đăng Ký Scrim<br />Papih Gaming',
+                subtitle: 'Chọn ca đấu & điền thông tin đội chính xác',
+                dailyTitle: '⚡ DAILY SCRIM',
+                dailyPrice: 'Rp 5.000',
+                perSession: '/ ca',
+                dailyPool: 'Giải thưởng: Rp 35.000<br />+ Thử thách',
+                nightTitle: '🌙 NIGHT SCRIM',
+                nightPrice: 'Rp 10.000',
+                nightPool: 'Giải thưởng: Rp 100.000<br />+ Thử thách',
+                infoNote: '<strong>Có thể đăng ký nhiều ca!</strong> Chọn tất cả các ca bạn muốn.',
+                labelTeamName: 'Tên Đội',
+                phTeamName: 'Nhập tên đội của bạn...',
+                errTeamName: 'Bắt buộc điền!',
+                labelTeamLogo: 'Logo Đội',
+                logoUploadTitle: 'Tải Logo Đội',
+                logoUploadSub: 'Định dạng PNG/JPG (Tối đa 5 MB) - Hiển thị HD',
+                logoBtnSelect: 'Chọn',
+                logoBtnChange: 'Đổi',
+                errTeamLogo: 'Vui lòng tải lên logo đội!',
+                labelCaptainNick: 'Nick Đội Trưởng',
+                phCaptainNick: 'Nhập nick đội trưởng...',
+                errCaptainNick: 'Bắt buộc điền!',
+                labelWhatsapp: 'Số WhatsApp',
+                phWhatsapp: 'Ví dụ: 081234567890',
+                errWhatsapp: 'Số không hợp lệ!',
+                labelSelectSession: 'Chọn Ca Đấu',
+                errSession: 'Chọn tối thiểu 1 ca đấu!',
+                labelTotalCost: '💰 Tổng Thanh Toán',
+                btnRegister: 'Đăng Ký & Tiếp Tục Thanh Toán ➜',
+                qrisBadge: '💳 Thanh Toán Tự Động',
+                qrisTitle: 'Quét Mã QRIS Để Thanh Toán',
+                qrisSubtitle: 'Mở DANA, GoPay, ShopeePay hoặc Ứng dụng ngân hàng',
+                waitingPayment: 'Đang Chờ Thanh Toán...',
+                nominalPayment: 'Số Tiền Thanh Toán',
+                discountBadge: '🎉 Giảm giá: Tiết kiệm Rp',
+                copyCode: '📋 Sao Chép',
+                btnBack: '← Quay Lại',
+                successPayment: 'Thanh Toán Thành Công!',
+                successSubtitle: 'Đăng ký scrim của bạn đã được ghi nhận vào hệ thống.',
+                statusVerified: '✅ ĐÃ THANH TOÁN (XÁC THỰC)',
+                btnJoinGroup: '👉 Vào Nhóm',
+                btnCopyLink: '📋 Sao Chép Link',
+                linkCopied: '✅ Đã sao chép!'
+            },
+            es: {
+                code: 'ES',
+                name: 'Español',
+                flag: '🇪🇸',
+                step1: 'Registro',
+                step2: 'Pago',
+                step3: 'Completado',
+                badge: '🔥 Daily Scrim Papih Gaming',
+                title: 'Registro de Scrim<br />Papih Gaming',
+                subtitle: 'Selecciona las sesiones y completa los datos de tu equipo',
+                dailyTitle: '⚡ DAILY SCRIM',
+                dailyPrice: 'Rp 5.000',
+                perSession: '/ sesión',
+                dailyPool: 'Pool Prize: Rp 35.000<br />+ Desafío',
+                nightTitle: '🌙 NIGHT SCRIM',
+                nightPrice: 'Rp 10.000',
+                nightPool: 'Pool Prize: Rp 100.000<br />+ Desafío',
+                infoNote: '<strong>¡Puedes inscribirte en más de 1 sesión!</strong> Selecciona todas las que desees.',
+                labelTeamName: 'Nombre del Equipo',
+                phTeamName: 'Ingresa el nombre del equipo...',
+                errTeamName: '¡Campo obligatorio!',
+                labelTeamLogo: 'Logo del Equipo',
+                logoUploadTitle: 'Subir Logo del Equipo',
+                logoUploadSub: 'Formato PNG/JPG (Máx 5 MB) - Calidad HD',
+                logoBtnSelect: 'Elegir',
+                logoBtnChange: 'Cambiar',
+                errTeamLogo: '¡El logo del equipo es obligatorio!',
+                labelCaptainNick: 'Nick del Capitán',
+                phCaptainNick: 'Ingresa el nick del capitán...',
+                errCaptainNick: '¡Campo obligatorio!',
+                labelWhatsapp: 'Número de WhatsApp',
+                phWhatsapp: 'Ej: 081234567890',
+                errWhatsapp: '¡Formato inválido!',
+                labelSelectSession: 'Seleccionar Sesión',
+                errSession: '¡Selecciona al menos 1 sesión!',
+                labelTotalCost: '💰 Pago Total',
+                btnRegister: 'Registrarse y Pagar ➜',
+                qrisBadge: '💳 Pago Automático',
+                qrisTitle: 'Escanear QRIS para Pagar',
+                qrisSubtitle: 'Abre DANA, GoPay, ShopeePay o tu Banca Móvil',
+                waitingPayment: 'Esperando Pago...',
+                nominalPayment: 'Monto a Pagar',
+                discountBadge: '🎉 Descuento: Ahorro Rp',
+                copyCode: '📋 Copiar',
+                btnBack: '← Volver',
+                successPayment: '¡Pago Exitoso!',
+                successSubtitle: 'El registro de tu equipo ha sido grabado en el sistema.',
+                statusVerified: '✅ PAGADO (VERIFICADO)',
+                btnJoinGroup: '👉 Unirse al Grupo',
+                btnCopyLink: '📋 Copiar Enlace',
+                linkCopied: '✅ ¡Copiado!'
+            },
+            ar: {
+                code: 'AR',
+                name: 'العربية',
+                flag: '🇸🇦',
+                step1: 'التسجيل',
+                step2: 'الدفع',
+                step3: 'اكتمل',
+                badge: '🔥 Daily Scrim Papih Gaming',
+                title: 'تسجيل مباريات السكريم<br />Papih Gaming',
+                subtitle: 'اختر الجلسات وأدخل بيانات فريقك بدقة',
+                dailyTitle: '⚡ DAILY SCRIM',
+                dailyPrice: 'Rp 5.000',
+                perSession: '/ جلسة',
+                dailyPool: 'مجموع الجوائز: Rp 35.000<br />+ تحدي',
+                nightTitle: '🌙 NIGHT SCRIM',
+                nightPrice: 'Rp 10.000',
+                nightPool: 'مجموع الجوائز: Rp 100.000<br />+ تحدي',
+                infoNote: '<strong>يمكنك التسجيل في أكثر من جلسة!</strong> اختر جميع الجلسات التي تريدها.',
+                labelTeamName: 'اسم الفريق',
+                phTeamName: 'أدخل اسم الفريق...',
+                errTeamName: 'هذا الحقل إلزامي!',
+                labelTeamLogo: 'شعار الفريق',
+                logoUploadTitle: 'رفع شعار الفريق',
+                logoUploadSub: 'صيغة PNG/JPG (بحد أقصى 5 ميجابايت) - دقة عالية',
+                logoBtnSelect: 'اختيار',
+                logoBtnChange: 'تغيير',
+                errTeamLogo: 'شعار الفريق مطلوب!',
+                labelCaptainNick: 'لقب القائد',
+                phCaptainNick: 'أدخل لقب القائد...',
+                errCaptainNick: 'هذا الحقل إلزامي!',
+                labelWhatsapp: 'رقم الواتساب',
+                phWhatsapp: 'مثال: 081234567890',
+                errWhatsapp: 'رقم غير صحيح!',
+                labelSelectSession: 'اختر الجلسات',
+                errSession: 'اختر جلسة واحدة على الأقل!',
+                labelTotalCost: '💰 إجمالي الدفع',
+                btnRegister: 'تسجيل ومتابعة الدفع ➜',
+                qrisBadge: '💳 دفع آلي فوري',
+                qrisTitle: 'امسح رمز QRIS للدفع',
+                qrisSubtitle: 'افتح تطبيق DANA أو المحفظة الإلكترونية الخاصة بك',
+                waitingPayment: 'في انتظار الدفع...',
+                nominalPayment: 'المبلغ المستحق',
+                discountBadge: '🎉 خصم حصري: وفرت Rp',
+                copyCode: '📋 نسخ',
+                btnBack: '← رجوع',
+                successPayment: 'تم الدفع بنجاح!',
+                successSubtitle: 'تم تسجيل فريقك رسميًا في قاعدة بيانات النظام.',
+                statusVerified: '✅ تم الدفع (مؤكد)',
+                btnJoinGroup: '👉 دخول المجموعة',
+                btnCopyLink: '📋 نسخ الرابط',
+                linkCopied: '✅ تم النسخ!'
+            }
+        };
+
+        let currentLanguage = localStorage.getItem('scrim_lang') || 'id';
+
+        function toggleLangDropdown(e) {
+            if (e) e.stopPropagation();
+            const menu = document.getElementById('langDropdownMenu');
+            if (menu) menu.classList.toggle('show');
+        }
+
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('langDropdownMenu');
+            const btn = document.getElementById('langDropdownBtn');
+            if (menu && !menu.contains(e.target) && btn && !btn.contains(e.target)) {
+                menu.classList.remove('show');
+            }
+        });
+
+        function changeLanguage(lang) {
+            if (!TRANSLATIONS[lang]) return;
+            currentLanguage = lang;
+            localStorage.setItem('scrim_lang', lang);
+
+            // Update active pill label
+            const labelEl = document.getElementById('currentLangLabel');
+            if (labelEl) labelEl.textContent = TRANSLATIONS[lang].code;
+
+            // Update dropdown active highlight
+            document.querySelectorAll('.lang-item').forEach(el => {
+                if (el.dataset.lang === lang) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+
+            // Close dropdown
+            const menu = document.getElementById('langDropdownMenu');
+            if (menu) menu.classList.remove('show');
+
+            // Apply all translated texts
+            applyLanguageTexts(lang);
+        }
+
+        function applyLanguageTexts(lang) {
+            const t = TRANSLATIONS[lang] || TRANSLATIONS['id'];
+
+            // Stepper
+            const s1 = document.getElementById('stepLabel1'); if (s1) s1.textContent = t.step1;
+            const s2 = document.getElementById('stepLabel2'); if (s2) s2.textContent = t.step2;
+            const s3 = document.getElementById('stepLabel3'); if (s3) s3.textContent = t.step3;
+
+            // Step 1 Header
+            const hb = document.getElementById('headerBadge'); if (hb) hb.textContent = t.badge;
+            const ht = document.getElementById('headerTitle'); if (ht) ht.innerHTML = t.title;
+            const hs = document.getElementById('headerSubtitle'); if (hs) hs.textContent = t.subtitle;
+
+            // Daily & Night Scrim Info
+            const dt = document.getElementById('infoDailyType'); if (dt) dt.textContent = t.dailyTitle;
+            const dp = document.getElementById('infoDailyPrice'); if (dp) dp.textContent = t.dailyPrice;
+            const dper = document.getElementById('infoDailyPer'); if (dper) dper.textContent = t.perSession;
+            const dpl = document.getElementById('infoDailyPool'); if (dpl) dpl.innerHTML = t.dailyPool;
+
+            const nt = document.getElementById('infoNightType'); if (nt) nt.textContent = t.nightTitle;
+            const np = document.getElementById('infoNightPrice'); if (np) np.textContent = t.nightPrice;
+            const nper = document.getElementById('infoNightPer'); if (nper) nper.textContent = t.perSession;
+            const npl = document.getElementById('infoNightPool'); if (npl) npl.innerHTML = t.nightPool;
+
+            const inote = document.getElementById('infoNoteText'); if (inote) inote.innerHTML = t.infoNote;
+
+            // Form Labels & Placeholders
+            const ltn = document.getElementById('lblTeamName');
+            if (ltn) ltn.innerHTML = `${t.labelTeamName} <span class="required">*</span>`;
+            if (teamNameInput) teamNameInput.placeholder = t.phTeamName;
+            const errTn = document.getElementById('teamNameError'); if (errTn) errTn.textContent = t.errTeamName;
+
+            const ltl = document.getElementById('lblTeamLogo');
+            if (ltl) ltl.innerHTML = `${t.labelTeamLogo} <span class="required">*</span>`;
+            const logot = document.getElementById('logoTitleText');
+            if (logot && !state.teamLogo) logot.textContent = t.logoUploadTitle;
+            const logos = document.getElementById('logoSubText');
+            if (logos && !state.teamLogo) logos.textContent = t.logoUploadSub;
+            const btnP = document.getElementById('btnPilihLogo');
+            if (btnP) btnP.textContent = state.teamLogo ? t.logoBtnChange : t.logoBtnSelect;
+            const errTl = document.getElementById('teamLogoError'); if (errTl) errTl.textContent = t.errTeamLogo;
+
+            const lcn = document.getElementById('lblCaptainNick');
+            if (lcn) lcn.innerHTML = `${t.labelCaptainNick} <span class="required">*</span>`;
+            if (captainNickInput) captainNickInput.placeholder = t.phCaptainNick;
+            const errCn = document.getElementById('captainNickError'); if (errCn) errCn.textContent = t.errCaptainNick;
+
+            const lwa = document.getElementById('lblWhatsapp');
+            if (lwa) lwa.innerHTML = `${t.labelWhatsapp} <span class="required">*</span>`;
+            if (whatsappInput) whatsappInput.placeholder = t.phWhatsapp;
+            const errWa = document.getElementById('whatsappError'); if (errWa) errWa.textContent = t.errWhatsapp;
+
+            const lss = document.getElementById('lblSelectSession');
+            if (lss) lss.innerHTML = `${t.labelSelectSession} <span class="required">*</span>`;
+            const errSs = document.getElementById('sessionError'); if (errSs) errSs.textContent = t.errSession;
+
+            const ltc = document.getElementById('lblTotalCost'); if (ltc) ltc.textContent = t.labelTotalCost;
+            const btnReg = document.getElementById('btnRegister'); if (btnReg) btnReg.textContent = t.btnRegister;
+
+            // Step 2 elements
+            const qb = document.getElementById('qrisBadge'); if (qb) qb.textContent = t.qrisBadge;
+            const qt = document.getElementById('qrisTitle'); if (qt) qt.textContent = t.qrisTitle;
+            const qs = document.getElementById('qrisSubtitle'); if (qs) qs.textContent = t.qrisSubtitle;
+            const st = document.getElementById('statusTitle');
+            if (st && !state.isPaid) st.textContent = t.waitingPayment;
+            const lnp = document.getElementById('lblNominalPayment'); if (lnp) lnp.textContent = t.nominalPayment;
+            const btnB = document.getElementById('btnBackStep1'); if (btnB) btnB.textContent = t.btnBack;
+
+            // Step 3 elements
+            const s3t = document.getElementById('step3Title'); if (s3t) s3t.textContent = t.successPayment;
+            const s3s = document.getElementById('step3Subtitle'); if (s3s) s3s.textContent = t.successSubtitle;
+            const s3sv = document.getElementById('step3StatusVal'); if (s3sv) s3sv.textContent = t.statusVerified;
+            const s3btn = document.getElementById('btnStep3MainAction');
+            if (s3btn) s3btn.innerHTML = `${t.btnJoinGroup} 📲`;
+        }
+
+        // ==================== REALTIME INPUT VALIDATION ====================
+        teamNameInput.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('error');
+                document.getElementById('teamNameError').classList.remove('show');
+            }
+        });
+
+        captainNickInput.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('error');
+                document.getElementById('captainNickError').classList.remove('show');
+            }
+        });
+
+        whatsappInput.addEventListener('input', function() {
+            const wa = this.value.trim();
+            if (/^[0-9]{8,16}$/.test(wa)) {
+                this.classList.remove('error');
+                document.getElementById('whatsappError').classList.remove('show');
+            }
+        });
+
+        // ==================== SESSION SELECTION ====================
+        sessionTimesContainer.querySelectorAll('.session-time-item').forEach(item => {
+            item.addEventListener('click', function() {
+                if (window.isGlobalFullSlotActive) return;
+                if (this.style.display === 'none') return;
+                if (this.classList.contains('full')) return;
+                const time = this.dataset.time;
+                const type = this.dataset.type;
+                const price = parseInt(this.dataset.price);
+                const idx = state.selectedSessions.findIndex(s => s.time === time && s.type === type);
+                if (idx >= 0) {
+                    state.selectedSessions.splice(idx, 1);
+                    this.classList.remove('selected');
+                } else {
+                    state.selectedSessions.push({ time, type, price });
+                    this.classList.add('selected');
+                }
+                if (state.selectedSessions.length > 0) {
+                    document.getElementById('sessionError').classList.remove('show');
+                    if (sessionTimesContainer) sessionTimesContainer.classList.remove('error');
+                }
+                updateTotalDisplay();
+            });
+        });
+
+        function updateTotalDisplay() {
+            const total = state.selectedSessions.reduce((sum, s) => sum + s.price, 0);
+            state.baseTotal = total;
+            totalAmountDisplay.textContent = `Rp ${total.toLocaleString('id-ID')}`;
+        }
+
+        // ==================== FLOATING TOAST HELPER ====================
+        function showToast(msg, type = 'info') {
+            let toast = document.getElementById('toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'toast';
+                toast.className = 'toast';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = msg;
+            toast.className = `toast ${type} show`;
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3500);
+        }
+
+        // ==================== VALIDASI FORMULIR (AUTO SCROLL & SHAKE) ====================
+        function validateStep1() {
+            let isValid = true;
+            let firstInvalidEl = null;
+            let firstErrorMsg = '';
+
+            // 1. Validasi Nama Tim (Baris 1 Kiri)
+            if (!teamNameInput.value.trim()) {
+                teamNameInput.classList.add('error');
+                document.getElementById('teamNameError').classList.add('show');
+                isValid = false;
+                if (!firstInvalidEl) {
+                    firstInvalidEl = teamNameInput;
+                    firstErrorMsg = 'Nama Tim belum diisi!';
+                }
+            } else {
+                teamNameInput.classList.remove('error');
+                document.getElementById('teamNameError').classList.remove('show');
+            }
+
+            // 2. Validasi Logo Tim (Baris 1 Kanan)
+            const logoCard = document.getElementById('logoUploadCard');
+            const logoErr = document.getElementById('teamLogoError');
+            if (!state.teamLogo) {
+                if (logoCard) logoCard.classList.add('error');
+                if (logoErr) logoErr.classList.add('show');
+                isValid = false;
+                if (!firstInvalidEl) {
+                    firstInvalidEl = logoCard || document.getElementById('lblTeamLogo');
+                    firstErrorMsg = 'Logo Tim wajib diunggah!';
+                }
+            } else {
+                if (logoCard) logoCard.classList.remove('error');
+                if (logoErr) logoErr.classList.remove('show');
+            }
+
+            // 3. Validasi Nick Kapten (Baris 2 Kiri)
+            if (!captainNickInput.value.trim()) {
+                captainNickInput.classList.add('error');
+                document.getElementById('captainNickError').classList.add('show');
+                isValid = false;
+                if (!firstInvalidEl) {
+                    firstInvalidEl = captainNickInput;
+                    firstErrorMsg = 'Nick Kapten belum diisi!';
+                }
+            } else {
+                captainNickInput.classList.remove('error');
+                document.getElementById('captainNickError').classList.remove('show');
+            }
+
+            // 4. Validasi Nomor WhatsApp (Baris 2 Kanan)
+            const wa = whatsappInput.value.trim();
+            if (!wa || !/^[0-9]{8,16}$/.test(wa)) {
+                whatsappInput.classList.add('error');
+                document.getElementById('whatsappError').classList.add('show');
+                isValid = false;
+                if (!firstInvalidEl) {
+                    firstInvalidEl = whatsappInput;
+                    firstErrorMsg = !wa ? 'Nomor WhatsApp belum diisi!' : 'Format nomor WhatsApp harus berupa 8-16 angka!';
+                }
+            } else {
+                whatsappInput.classList.remove('error');
+                document.getElementById('whatsappError').classList.remove('show');
+            }
+
+            // 5. Validasi Minimal 1 Sesi (Baris 3)
+            const sessionTimesBox = document.getElementById('sessionTimesContainer');
+            const sessionErr = document.getElementById('sessionError');
+            if (state.selectedSessions.length === 0) {
+                if (sessionErr) sessionErr.classList.add('show');
+                if (sessionTimesBox) sessionTimesBox.classList.add('error');
+                isValid = false;
+                if (!firstInvalidEl) {
+                    firstInvalidEl = sessionTimesBox || document.getElementById('lblSelectSession');
+                    firstErrorMsg = 'Pilih minimal 1 sesi scrim!';
+                }
+            } else {
+                if (sessionErr) sessionErr.classList.remove('show');
+                if (sessionTimesBox) sessionTimesBox.classList.remove('error');
+            }
+
+            // JIKA ADA DATA YANG BELUM LENGKAP: AUTO-SCROLL KE ELEMEN TERSEBUT
+            if (!isValid && firstInvalidEl) {
+                // 1. Scroll halus langsung ke atas menuju field yang belum terisi
+                firstInvalidEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // 2. Beri fokus kursor ke input yang bersangkutan
+                if (typeof firstInvalidEl.focus === 'function') {
+                    setTimeout(() => {
+                        try { firstInvalidEl.focus({ preventScroll: true }); } catch(e) {}
+                    }, 350);
+                }
+
+                // 3. Efek getar (shake) untuk memikat mata pelanggan ke posisi field
+                const shakeTarget = firstInvalidEl.closest('.form-group') || firstInvalidEl;
+                shakeTarget.classList.remove('field-shake');
+                void shakeTarget.offsetWidth; // trigger reflow
+                shakeTarget.classList.add('field-shake');
+                setTimeout(() => {
+                    shakeTarget.classList.remove('field-shake');
+                }, 800);
+
+                // 4. Notifikasi Toast ramah di atas layar
+                showToast(`⚠️ ${firstErrorMsg}`, 'error');
+            }
+
+            return isValid;
+        }
+
+        function generateTransactionId() {
+            return `SCRIM-${Math.floor(1000 + Math.random() * 9000)}`;
+        }
+
+        // ==================== LOGO TIM UPLOAD HANDLERS ====================
+        function triggerLogoFileInput() {
+            const inp = document.getElementById('teamLogoInput');
+            if (inp) inp.click();
+        }
+
+        function handleLogoFileSelect(e) {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                alert("Ukuran file logo maksimal 5MB!");
+                e.target.value = "";
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const raw = evt.target.result;
+                // Pertahankan 100% Kualitas Asli (HD / Original) tanpa kompresi burik
+                state.teamLogo = raw;
+                const previewThumb = document.getElementById('logoPreviewThumbnail');
+                const iconSvg = document.getElementById('logoIconSvg');
+                const titleText = document.getElementById('logoTitleText');
+                const subText = document.getElementById('logoSubText');
+                const btnPilih = document.getElementById('btnPilihLogo');
+                const btnRemove = document.getElementById('btnRemoveLogoInline');
+                const logoCard = document.getElementById('logoUploadCard');
+                const logoErr = document.getElementById('teamLogoError');
+
+                if (previewThumb) {
+                    previewThumb.src = raw;
+                    previewThumb.style.display = 'block';
+                }
+                if (iconSvg) iconSvg.style.display = 'none';
+                if (titleText) {
+                    titleText.textContent = file.name || 'Logo Tim Terpilih ✓';
+                    titleText.style.color = 'var(--success)';
+                }
+                if (subText) subText.textContent = 'Kualitas Asli HD (Jernih & Tajam) ✓';
+                if (btnPilih) {
+                    const curLang = currentLanguage || 'id';
+                    btnPilih.textContent = (TRANSLATIONS[curLang] && TRANSLATIONS[curLang].logoBtnChange) || 'Ganti';
+                }
+                if (btnRemove) btnRemove.style.display = 'inline-flex';
+                if (logoCard) logoCard.classList.remove('error');
+                if (logoErr) logoErr.classList.remove('show');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeSelectedLogo() {
+            state.teamLogo = '';
+            const inp = document.getElementById('teamLogoInput');
+            if (inp) inp.value = '';
+            const previewThumb = document.getElementById('logoPreviewThumbnail');
+            const iconSvg = document.getElementById('logoIconSvg');
+            const titleText = document.getElementById('logoTitleText');
+            const subText = document.getElementById('logoSubText');
+            const btnPilih = document.getElementById('btnPilihLogo');
+            const btnRemove = document.getElementById('btnRemoveLogoInline');
+            
+            if (previewThumb) {
+                previewThumb.src = '';
+                previewThumb.style.display = 'none';
+            }
+            if (iconSvg) iconSvg.style.display = 'block';
+            if (titleText) {
+                const curLang = currentLanguage || 'id';
+                titleText.textContent = (TRANSLATIONS[curLang] && TRANSLATIONS[curLang].logoUploadTitle) || 'Upload Logo Tim';
+                titleText.style.color = 'var(--text-primary)';
+            }
+            if (subText) {
+                const curLang = currentLanguage || 'id';
+                subText.textContent = (TRANSLATIONS[curLang] && TRANSLATIONS[curLang].logoUploadSub) || 'Format PNG/JPG (Maks 5 MB) - Tampil HD di data';
+            }
+            if (btnPilih) {
+                const curLang = currentLanguage || 'id';
+                btnPilih.textContent = (TRANSLATIONS[curLang] && TRANSLATIONS[curLang].logoBtnSelect) || 'Pilih';
+            }
+            if (btnRemove) btnRemove.style.display = 'none';
+        }
+
+        function compressImage(src, maxWidth, maxHeight, quality, callback) {
+            const img = new Image();
+            img.onload = function() {
+                let w = img.width;
+                let h = img.height;
+                if (w > h) {
+                    if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
+                } else {
+                    if (h > maxHeight) { w = Math.round((w * maxHeight) / h); h = maxHeight; }
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                callback(canvas.toDataURL('image/png', quality));
+            };
+            img.src = src;
+        }
+
+        // ==================== PROSES LANJUT KE PEMBAYARAN (ANTI-SPAM) ====================
+        let isSubmittingPayment = false;
+        function goToPayment() {
+            if (window.isGlobalFullSlotActive) {
+                showToast('⚠️ Pendaftaran ditutup! FULL SLOT YAH LANJUT BESOK.', 'error');
+                return;
+            }
+            if (isSubmittingPayment) return;
+            if (!validateStep1()) return;
+
+            const btn = document.getElementById('btnRegister');
+            isSubmittingPayment = true;
+            if (btn) {
+                btn.disabled = true;
+                btn.dataset.origHtml = btn.innerHTML;
+                btn.innerHTML = '⏳ Memproses...';
+            }
+
+            setTimeout(() => {
+                isSubmittingPayment = false;
+                if (btn) {
+                    btn.disabled = false;
+                    if (btn.dataset.origHtml) btn.innerHTML = btn.dataset.origHtml;
+                }
+            }, 3500);
+
+            state.teamName = teamNameInput.value.trim();
+            state.captainNick = captainNickInput.value.trim();
+            state.whatsappNumber = whatsappInput.value.trim();
+            state.transactionId = generateTransactionId();
+            state.isPaid = false;
+
+            // RUMUS POTONGAN ACAK: 1 s.d 20 RUPIAH (MAKS KURANG 20 RP)
+            // Contoh 5.000 menjadi 4.980, 4.985, 4.992, dll.
+            const potongan = Math.floor(Math.random() * 20) + 1; // 1 .. 20
+            state.discount = potongan;
+            state.finalAmount = Math.max(1, state.baseTotal - potongan);
+
+            transactionIdDisplay.textContent = state.transactionId;
+            paymentAmountDisplay.textContent = `Rp ${state.finalAmount.toLocaleString('id-ID')}`;
+            const curLang = currentLanguage || 'id';
+            const t = TRANSLATIONS[curLang] || TRANSLATIONS['id'];
+            discountBadge.textContent = `${t.discountBadge} ${potongan}`;
+
+            // Reset UI Pembayaran & QRIS Frame
+            resetPaymentStatusUI();
+
+            // Render QRIS Dinamis Bersih
+            renderPureQRCode(state.finalAmount);
+
+            showStep(2);
+            updateStepIndicator(2);
+            saveActiveSession(2);
+
+            // Mulai Countdown Timer 5 Menit (300 Detik)
+            startPaymentTimer(300);
+
+            // Kirim pendaftaran awal status PENDING ke Sheet DATA
+            registerToGoogleSheet();
+
+            // Mulai polling realtime setiap 2.5 detik
+            startPollingStatus();
+        }
+
+        function resetPaymentStatusUI() {
+            if (qrisCanvasFrame) {
+                qrisCanvasFrame.classList.remove('fade-out');
+                qrisCanvasFrame.style.display = 'inline-flex';
+            }
+            if (qrisSuccessCard) {
+                qrisSuccessCard.style.display = 'none';
+            }
+            const expCard = document.getElementById('qrisExpiredCard');
+            if (expCard) {
+                expCard.style.display = 'none';
+            }
+            if (waitingWrapper) {
+                waitingWrapper.style.display = 'flex';
+            }
+            const timerPill = document.getElementById('paymentTimerPill');
+            if (timerPill) {
+                timerPill.classList.remove('timer-urgent');
+            }
+            if (statusTitle) {
+                const curLang = currentLanguage || 'id';
+                const t = TRANSLATIONS[curLang] || TRANSLATIONS['id'];
+                statusTitle.textContent = t.waitingPayment;
+            }
+        }
+
+        // ==================== TIMER 5 MENIT PEMBAYARAN QRIS ====================
+        let paymentTimerInterval = null;
+        let paymentRemainingSeconds = 300;
+
+        function startPaymentTimer(durationSeconds) {
+            clearInterval(paymentTimerInterval);
+            paymentRemainingSeconds = durationSeconds !== undefined ? durationSeconds : 300;
+
+            const timerPill = document.getElementById('paymentTimerPill');
+            const timerDigits = document.getElementById('paymentTimerDigits');
+
+            function updateTimerUI() {
+                const mins = Math.floor(paymentRemainingSeconds / 60);
+                const secs = paymentRemainingSeconds % 60;
+                if (timerDigits) {
+                    timerDigits.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                }
+                if (timerPill) {
+                    if (paymentRemainingSeconds <= 60 && paymentRemainingSeconds > 0) {
+                        timerPill.classList.add('timer-urgent');
+                    } else {
+                        timerPill.classList.remove('timer-urgent');
+                    }
+                }
+            }
+
+            updateTimerUI();
+
+            paymentTimerInterval = setInterval(() => {
+                if (state.isPaid) {
+                    clearInterval(paymentTimerInterval);
+                    return;
+                }
+
+                paymentRemainingSeconds--;
+                updateTimerUI();
+
+                if (paymentRemainingSeconds <= 0) {
+                    clearInterval(paymentTimerInterval);
+                    onPaymentExpired();
+                }
+            }, 1000);
+        }
+
+        function onPaymentExpired() {
+            clearInterval(paymentTimerInterval);
+            clearInterval(pollingTimer);
+
+            if (qrisCanvasFrame) {
+                qrisCanvasFrame.style.display = 'none';
+            }
+            if (waitingWrapper) {
+                waitingWrapper.style.display = 'none';
+            }
+            const expCard = document.getElementById('qrisExpiredCard');
+            if (expCard) {
+                expCard.style.display = 'block';
+            }
+
+            const btnWaLink = document.getElementById('btnExpiredWaLink');
+            if (btnWaLink) {
+                const tpl = currentWaTemplates.expired || DEFAULT_WA_TEMPLATES.expired;
+                const text = formatWaTemplate(tpl, {
+                    transactionId: state.transactionId,
+                    totalPrice: (state.finalAmount || 0).toLocaleString('id-ID'),
+                    teamName: state.teamName
+                });
+                btnWaLink.href = `https://wa.me/${WA_ADMIN_NUMBER}?text=${encodeURIComponent(text)}`;
+            }
+
+            clearActiveSession();
+        }
+
+        function restartRegistration() {
+            clearActiveSession();
+            clearInterval(paymentTimerInterval);
+            clearInterval(pollingTimer);
+            resetPaymentStatusUI();
+            showStep(1);
+            updateStepIndicator(1);
+        }
+
+        // ==================== DAFTARKAN KE GOOGLE APPS SCRIPT (SHEET DATA) ====================
+        function registerToGoogleSheet() {
+            const sessionsText = state.selectedSessions.map(s => 
+                `${s.time} ${s.type === 'daily' ? 'DAILY' : 'NIGHT'}`
+            ).join(', ');
+
+            const payload = {
+                action: 'add',
+                transactionId: state.transactionId,
+                teamName: state.teamName,
+                captainNick: state.captainNick,
+                whatsappNumber: state.whatsappNumber,
+                sessions: sessionsText,
+                totalPrice: state.finalAmount,
+                status: 'PENDING',
+                logo: state.teamLogo || ''
+            };
+
+            // 1. Kirim via POST utama (membawa data lengkap pendaftaran termasuk Base64 Logo)
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                console.log('Pendaftaran & Logo Tim berhasil dikirim ke server Apps Script.');
+            }).catch(err => {
+                console.warn('POST gagal/terkendala, mencoba cadangan GET:', err);
+                try {
+                    const params = new URLSearchParams({
+                        action: 'add',
+                        transactionId: payload.transactionId,
+                        teamName: payload.teamName,
+                        captainNick: payload.captainNick,
+                        whatsappNumber: payload.whatsappNumber,
+                        sessions: payload.sessions,
+                        totalPrice: payload.totalPrice,
+                        status: 'PENDING',
+                        _t: Date.now()
+                    }).toString();
+                    const ping = new Image();
+                    ping.src = `${GOOGLE_SCRIPT_URL}?${params}`;
+                } catch(e) {}
+            });
+        }
+
+        // ==================== POLLING REALTIME STATUS PEMBAYARAN ====================
+        function startPollingStatus() {
+            clearInterval(pollingTimer);
+            pollingTimer = setInterval(async () => {
+                if (state.isPaid) {
+                    clearInterval(pollingTimer);
+                    return;
+                }
+                try {
+                    const url = `${GOOGLE_SCRIPT_URL}?action=checkStatus&transactionId=${encodeURIComponent(state.transactionId)}&t=${Date.now()}`;
+                    const res = await fetch(url);
+                    if (!res.ok) return;
+                    const json = await res.json();
+
+                    if (json && String(json.status).toUpperCase() === 'LUNAS') {
+                        state.lunasRank = json.lunasRank || 1;
+                        onPaymentSuccess();
+                    }
+                } catch (e) {
+                    // Fail silent on poll error
+                }
+            }, 2500);
+        }
+
+        // ==================== KETIKA PEMBAYARAN BERHASIL (FINTECH DANA ANIMATION) ====================
+        function onPaymentSuccess() {
+            if (state.isPaid) return;
+            state.isPaid = true;
+            clearInterval(pollingTimer);
+            clearInterval(paymentTimerInterval);
+
+            // 1. Mainkan Suara Notifikasi Sukses Chime
+            playCelebrationSound();
+
+            // 2. Update nominal di kartu sukses QRIS
+            if (successAmountText) {
+                successAmountText.textContent = `Rp ${state.finalAmount.toLocaleString('id-ID')}`;
+            }
+
+            // 3. Sembunyikan indikator menunggu pembayaran & timer
+            if (waitingWrapper) {
+                waitingWrapper.style.display = 'none';
+            }
+
+            // 4. Efek Transisi Mulus (QRIS fade out -> Muncul Fintech Success Card)
+            if (qrisCanvasFrame) {
+                qrisCanvasFrame.classList.add('fade-out');
+                setTimeout(() => {
+                    qrisCanvasFrame.style.display = 'none';
+                    if (qrisSuccessCard) {
+                        qrisSuccessCard.style.display = 'block';
+                    }
+                }, 350);
+            }
+
+            // 5. Update data Step 3 & siapkan Link Grup WhatsApp Sesi
+            updateStep3Data();
+            renderStep3GroupLinks();
+
+            // 6. Transisi otomatis ke Step 3 setelah animasi sukses dinikmati (1.8 detik)
+            setTimeout(() => {
+                showStep(3);
+                updateStepIndicator(3);
+                saveActiveSession(3);
+            }, 1800);
+        }
+
+        // ==================== ALOKASI SESI C1 / C2 & DETEKSI OVERBOOK ====================
+        function getSessionAllocation(time, type) {
+            const key = `${time}_${type}`.replace('.', '_');
+            const linkC1 = (groupLinksMap && groupLinksMap[key]) || '';
+            const linkC2 = (groupLinksMap && groupLinksMap[`${key}_c2`]) || '';
+            const mode = (groupLinksMap && groupLinksMap[`mode_${key}`]) || 'auto';
+            const rank = state.lunasRank || 1;
+
+            let isOverbook = false;
+            let pot = 'C1';
+            let link = '';
+
+            if (mode === 'c1') {
+                if (rank <= 15) {
+                    pot = 'C1';
+                    link = linkC1 || `https://wa.me/${WA_ADMIN_NUMBER}?text=Halo%20Admin,%20saya%20sudah%20lunas%20untuk%20Sesi%20${time}%20(Kode:%20${state.transactionId})`;
+                } else {
+                    isOverbook = true;
+                }
+            } else if (mode === 'c2') {
+                if (linkC2) {
+                    pot = 'C2';
+                    link = linkC2;
+                } else {
+                    isOverbook = true;
+                }
+            } else {
+                // Mode AUTO (Default): C1 untuk #1..15, C2 untuk #16..30 (jika ada C2)
+                if (rank <= 15) {
+                    pot = 'C1';
+                    link = linkC1 || `https://wa.me/${WA_ADMIN_NUMBER}?text=Halo%20Admin,%20saya%20sudah%20lunas%20untuk%20Sesi%20${time}%20(Kode:%20${state.transactionId})`;
+                } else if (rank <= 30 && linkC2) {
+                    pot = 'C2';
+                    link = linkC2;
+                } else {
+                    // Jika > 15 dan link C2 kosong ATAU kuota total > 30 => OVERBOOK
+                    isOverbook = true;
+                }
+            }
+
+            return { isOverbook, pot, link, rank };
+        }
+
+        // ==================== RENDER LINK GRUP DI STEP 3 ====================
+        function renderStep3GroupLinks() {
+            const s3Container = document.getElementById('step3GroupSection');
+            if (!s3Container) return;
+            s3Container.innerHTML = '';
+
+            let hasOverbook = false;
+            let validLinks = [];
+
+            state.selectedSessions.forEach(s => {
+                const alloc = getSessionAllocation(s.time, s.type);
+
+                if (alloc.isOverbook) {
+                    hasOverbook = true;
+                    const tpl = currentWaTemplates.overbook || DEFAULT_WA_TEMPLATES.overbook;
+                    const waText = formatWaTemplate(tpl, {
+                        sessions: `${s.time} WIB`,
+                        time: `${s.time} WIB`,
+                        transactionId: state.transactionId,
+                        teamName: state.teamName,
+                        totalPrice: (state.finalAmount || 0).toLocaleString('id-ID')
+                    });
+                    const waUrl = `https://wa.me/${WA_ADMIN_NUMBER}?text=${encodeURIComponent(waText)}`;
+
+                    card.innerHTML = `
+                        <div class="overbook-badge">⚠️ OVERBOOK (ANTREAN #${alloc.rank})</div>
+                        <div class="overbook-title">PEMBAYARAN BERHASIL NAMUN UDAH FULL SLOT. KONFIRMASI KE ADMIN UNTUK REFFUND.</div>
+                        <div class="overbook-desc">
+                            Slot 15 tim untuk Sesi <strong>${s.time} WIB</strong> baru saja terpenuhi beberapa detik sebelum transaksi selesai. Dana Anda aman 100%. Silakan hubungi Admin kami untuk konfirmasi pengembalian dana (refund) atau pengalihan ke jadwal sesi lainnya.
+                        </div>
+                        <div class="overbook-admin-box">
+                            <div>
+                                <div class="overbook-wa-label">WhatsApp Resmi Admin Scrim:</div>
+                                <div class="overbook-wa-number">${formatWaDisplay(WA_ADMIN_NUMBER)}</div>
+                            </div>
+                            <div class="overbook-actions">
+                                <a href="${waUrl}" target="_blank" class="btn-chat-admin">
+                                    💬 Chat Admin
+                                </a>
+                                <button type="button" class="btn-copy-admin-wa" onclick="copyAdminWaNumber('${WA_ADMIN_NUMBER}', this)">
+                                    📋 Salin No Admin
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    s3Container.appendChild(card);
+                } else {
+                    validLinks.push(alloc.link);
+                    const card = document.createElement('div');
+                    card.className = 'step3-session-item';
+                    card.innerHTML = `
+                        <div class="step3-session-name">
+                            🎮 ${s.time} WIB ${alloc.pot}
+                            <span class="tag-pill-pot ${alloc.pot.toLowerCase()}">POT ${alloc.pot} (Slot #${alloc.rank})</span>
+                        </div>
+                        <div class="step3-session-url">${alloc.link}</div>
+                        <div class="step3-session-actions">
+                            <button class="btn-copy-link" onclick="copyGroupUrl('${alloc.link}', this)">
+                                📋 Salin Link
+                            </button>
+                            <a href="${alloc.link}" target="_blank" class="btn-popup-link" title="Buka langsung WhatsApp">
+                                👉 Masuk Grup
+                            </a>
+                        </div>
+                    `;
+                    s3Container.appendChild(card);
+                }
+            });
+
+            // Tombol besar paling bawah jika hanya ada 1 link valid dan tidak overbook
+            const btnMainAction = document.getElementById('btnStep3MainAction');
+            if (btnMainAction) {
+                if (validLinks.length === 1 && !hasOverbook) {
+                    btnMainAction.style.display = 'inline-flex';
+                    btnMainAction.onclick = function() {
+                        window.open(validLinks[0], '_blank');
+                    };
+                } else {
+                    btnMainAction.style.display = 'none';
+                }
+            }
+        }
+
+        function formatWaDisplay(num) {
+            if (!num) return '0851-6623-5006';
+            let clean = String(num).replace(/^62/, '0');
+            if (clean.length === 12) {
+                return clean.replace(/(\d{4})(\d{4})(\d{4})/, '$1-$2-$3');
+            }
+            return clean;
+        }
+
+        function copyAdminWaNumber(num, btn) {
+            const raw = String(num).replace(/^62/, '0');
+            navigator.clipboard.writeText(raw).then(() => {
+                const orig = btn.innerHTML;
+                btn.innerHTML = '✅ No Admin Tersalin!';
+                btn.style.color = '#00f076';
+                setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
+            }).catch(() => {
+                alert('Nomor WhatsApp Admin: ' + raw);
+            });
+        }
+
+        function copyGroupUrl(url, btn) {
+            navigator.clipboard.writeText(url).then(() => {
+                const prev = btn.innerHTML;
+                btn.innerHTML = '✅ Tersalin!';
+                btn.style.color = '#00f076';
+                setTimeout(() => {
+                    btn.innerHTML = prev;
+                    btn.style.color = '#fff';
+                }, 1800);
+            }).catch(() => {
+                const inp = document.createElement('input');
+                inp.value = url; document.body.appendChild(inp); inp.select();
+                document.execCommand('copy'); document.body.removeChild(inp);
+                const prev = btn.innerHTML;
+                btn.innerHTML = '✅ Tersalin!';
+                btn.style.color = '#00f076';
+                setTimeout(() => {
+                    btn.innerHTML = prev;
+                    btn.style.color = '#fff';
+                }, 1800);
+            });
+        }
+
+        function openAllGroupLinks() {
+            if (!state.selectedSessions.length) return;
+            state.selectedSessions.forEach((s, idx) => {
+                const link = getLinkForSession(s.time, s.type);
+                setTimeout(() => {
+                    window.open(link, '_blank');
+                }, idx * 400);
+            });
+        }
+
+        function updateStep3Data() {
+            document.getElementById('step3TransactionId').textContent = state.transactionId;
+            const teamNameEl = document.getElementById('step3TeamName');
+            if (state.teamLogo) {
+                teamNameEl.innerHTML = `<div style="display:inline-flex;align-items:center;gap:8px;"><img src="${state.teamLogo}" style="width:26px;height:26px;border-radius:4px;object-fit:cover;border:1px solid var(--border-color);vertical-align:middle;" /> <span>${state.teamName}</span></div>`;
+            } else {
+                teamNameEl.textContent = state.teamName;
+            }
+            document.getElementById('step3CaptainNick').textContent = state.captainNick;
+            document.getElementById('step3Total').textContent = `Rp ${state.finalAmount.toLocaleString('id-ID')}`;
+
+            const sessionsText = state.selectedSessions.map(s => 
+                `${s.time} (${s.type === 'daily' ? 'Daily' : 'Night'})`
+            ).join(', ');
+            document.getElementById('step3Sessions').textContent = sessionsText;
+        }
+
+        function playCelebrationSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.15, ctx.currentTime + idx * 0.12);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.12 + 0.35);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + idx * 0.12);
+                    osc.stop(ctx.currentTime + idx * 0.12 + 0.4);
+                });
+            } catch(e) {}
+        }
+
+        // ==================== NAVIGATION ====================
+        function goBackToStep1() {
+            clearInterval(pollingTimer);
+            clearInterval(paymentTimerInterval);
+            clearActiveSession();
+            isSubmittingPayment = false;
+            const btn = document.getElementById('btnRegister');
+            if (btn) { btn.disabled = false; if (btn.dataset.origHtml) btn.innerHTML = btn.dataset.origHtml; }
+            showStep(1);
+            updateStepIndicator(1);
+        }
+
+        function showStep(n) {
+            [step1, step2, step3].forEach(el => el.classList.remove('active'));
+            if (n === 1) step1.classList.add('active');
+            if (n === 2) step2.classList.add('active');
+            if (n === 3) step3.classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateStepIndicator(step) {
+            [stepDot1, stepDot2, stepDot3].forEach(el => el.classList.remove('active', 'completed'));
+            [stepLine1, stepLine2].forEach(el => el.classList.remove('completed'));
+            if (step === 1) { stepDot1.classList.add('active'); }
+            else if (step === 2) {
+                stepDot1.classList.add('completed'); stepDot2.classList.add('active');
+                stepLine1.classList.add('completed');
+            } else if (step === 3) {
+                stepDot1.classList.add('completed'); stepDot2.classList.add('completed');
+                stepDot3.classList.add('completed');
+                stepLine1.classList.add('completed'); stepLine2.classList.add('completed');
+            }
+        }
+
+        function copyTransactionId() {
+            const text = state.transactionId || transactionIdDisplay.textContent;
+            navigator.clipboard.writeText(text).then(() => alert('Kode Scrim disalin: ' + text))
+                .catch(() => {
+                    const inp = document.createElement('input');
+                    inp.value = text; document.body.appendChild(inp); inp.select();
+                    document.execCommand('copy'); document.body.removeChild(inp);
+                    alert('Kode Scrim disalin: ' + text);
+                });
+        }
+
+        function resetAll() {
+            clearInterval(pollingTimer);
+            clearInterval(paymentTimerInterval);
+            clearActiveSession();
+            isSubmittingPayment = false;
+            const btn = document.getElementById('btnRegister');
+            if (btn) { btn.disabled = false; if (btn.dataset.origHtml) btn.innerHTML = btn.dataset.origHtml; }
+            removeSelectedLogo();
+            state = {
+                teamName: '', captainNick: '', whatsappNumber: '', teamLogo: '',
+                selectedSessions: [], baseTotal: 0, discount: 0,
+                finalAmount: 0, transactionId: '', isPaid: false
+            };
+            teamNameInput.value = ''; captainNickInput.value = ''; whatsappInput.value = '';
+            ['teamNameError', 'captainNickError', 'whatsappError', 'sessionError', 'teamLogoError'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('show');
+            });
+            [teamNameInput, captainNickInput, whatsappInput].forEach(el => el.classList.remove('error'));
+            const logoCard = document.getElementById('logoUploadCard');
+            if (logoCard) logoCard.classList.remove('error');
+            sessionTimesContainer.querySelectorAll('.session-time-item').forEach(el => el.classList.remove('selected'));
+            updateTotalDisplay();
+            showStep(1); updateStepIndicator(1);
+        }
+
+        // ==================== GLOBAL FULL SLOT LOCK ====================
+        function applyGlobalFullSlot(isActive) {
+            isGlobalFullSlotActive = !!isActive;
+            window.isGlobalFullSlotActive = isGlobalFullSlotActive;
+            localStorage.setItem('scrimGlobalFullSlot', isGlobalFullSlotActive ? '1' : '0');
+
+            const banner = document.getElementById('globalFullSlotBanner');
+            const step1El = document.getElementById('step1');
+            const btnReg = document.getElementById('btnRegister');
+            const teamInput = document.getElementById('teamName');
+            const nickInput = document.getElementById('captainNick');
+            const waInput = document.getElementById('whatsappNumber');
+            const logoCard = document.getElementById('logoUploadCard');
+
+            if (isGlobalFullSlotActive) {
+                if (banner) banner.style.display = 'block';
+                if (step1El) step1El.classList.add('form-locked-global-fullslot');
+                if (teamInput) {
+                    teamInput.disabled = true;
+                    if (!teamInput.hasAttribute('data-orig-ph')) {
+                        teamInput.setAttribute('data-orig-ph', teamInput.placeholder || 'Masukkan nama tim...');
+                    }
+                    teamInput.placeholder = 'FULL SLOT YAH LANJUT BESOK';
+                }
+                if (nickInput) {
+                    nickInput.disabled = true;
+                    if (!nickInput.hasAttribute('data-orig-ph')) {
+                        nickInput.setAttribute('data-orig-ph', nickInput.placeholder || 'Masukkan nick kapten...');
+                    }
+                    nickInput.placeholder = 'FULL SLOT YAH LANJUT BESOK';
+                }
+                if (waInput) {
+                    waInput.disabled = true;
+                    if (!waInput.hasAttribute('data-orig-ph')) {
+                        waInput.setAttribute('data-orig-ph', waInput.placeholder || 'Contoh: 081234567890');
+                    }
+                    waInput.placeholder = 'FULL SLOT YAH LANJUT BESOK';
+                }
+                if (logoCard) {
+                    logoCard.style.pointerEvents = 'none';
+                    logoCard.style.opacity = '0.5';
+                }
+
+                // Kosongkan sesi yang sedang terpilih
+                if (typeof state !== 'undefined' && state.selectedSessions) {
+                    state.selectedSessions = [];
+                    document.querySelectorAll('.session-time-item').forEach(el => el.classList.remove('selected'));
+                    updateTotalDisplay();
+                }
+
+                if (btnReg) {
+                    btnReg.disabled = true;
+                    if (!btnReg.hasAttribute('data-orig-text')) {
+                        btnReg.setAttribute('data-orig-text', btnReg.innerHTML);
+                    }
+                    btnReg.innerHTML = '⛔ FULL SLOT YAH LANJUT BESOK';
+                    btnReg.classList.add('btn-locked-fullslot');
+                }
+            } else {
+                if (banner) banner.style.display = 'none';
+                if (step1El) step1El.classList.remove('form-locked-global-fullslot');
+                if (teamInput) {
+                    teamInput.disabled = false;
+                    const origPh = teamInput.getAttribute('data-orig-ph');
+                    if (origPh) teamInput.placeholder = origPh;
+                }
+                if (nickInput) {
+                    nickInput.disabled = false;
+                    const origPh = nickInput.getAttribute('data-orig-ph');
+                    if (origPh) nickInput.placeholder = origPh;
+                }
+                if (waInput) {
+                    waInput.disabled = false;
+                    const origPh = waInput.getAttribute('data-orig-ph');
+                    if (origPh) waInput.placeholder = origPh;
+                }
+                if (logoCard) {
+                    logoCard.style.pointerEvents = 'auto';
+                    logoCard.style.opacity = '1';
+                }
+
+                if (btnReg) {
+                    btnReg.disabled = false;
+                    const origText = btnReg.getAttribute('data-orig-text');
+                    btnReg.innerHTML = origText || 'Daftar &amp; Lanjut Bayar ➜';
+                    btnReg.classList.remove('btn-locked-fullslot');
+                }
+            }
+        }
+
+        // ==================== FIREBASE REALTIME LISTENER ====================
+        function applySessionStates(customHidden, customFull) {
+            const hidden = customHidden !== undefined ? customHidden : JSON.parse(localStorage.getItem('hiddenSessions') || '[]');
+            const full = customFull !== undefined ? customFull : JSON.parse(localStorage.getItem('fullSessions') || '[]');
+            document.querySelectorAll('.session-time-item').forEach(el => {
+                const time = el.dataset.time;
+                const type = el.dataset.type;
+                const isHidden = hidden.some(h => h.time === time && h.type === type);
+                const isFull = full.some(f => f.time === time && f.type === type);
+                if (isHidden) {
+                    el.style.display = 'none';
+                    el.classList.remove('selected', 'full');
+                    state.selectedSessions = state.selectedSessions.filter(s => !(s.time === time && s.type === type));
+                } else {
+                    el.style.display = 'flex';
+                    if (isFull) {
+                        el.classList.add('full');
+                        el.classList.remove('selected');
+                        state.selectedSessions = state.selectedSessions.filter(s => !(s.time === time && s.type === type));
+                    } else {
+                        el.classList.remove('full');
+                    }
+                }
+            });
+            updateTotalDisplay();
+        }
+
+        // ==================== AUTO-SAVE & RESTORE SESI (ANTI-KELUAR SAAT BAYAR / SELESAI) ====================
+        function saveActiveSession(stepNum) {
+            if (!state.transactionId) return;
+            try {
+                sessionStorage.setItem('scrim_active_session', JSON.stringify({
+                    step: stepNum,
+                    state: state,
+                    savedAt: Date.now()
+                }));
+            } catch(e) {}
+        }
+
+        function clearActiveSession() {
+            try {
+                sessionStorage.removeItem('scrim_active_session');
+            } catch(e) {}
+        }
+
+        // Peringatan jika peserta mencoba menutup / merefresh tab saat pembayaran QRIS berlangsung
+        window.addEventListener('beforeunload', function(e) {
+            if (state.transactionId && !state.isPaid && step2 && step2.classList.contains('active')) {
+                e.preventDefault();
+                e.returnValue = 'Pembayaran QRIS sedang berlangsung. Jangan tinggalkan halaman ini.';
+                return e.returnValue;
+            }
+        });
+
+        // ==================== INIT ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Apply saved theme and language
+            applyTheme(currentTheme);
+            changeLanguage(currentLanguage);
+
+            if (isGlobalFullSlotActive) {
+                applyGlobalFullSlot(true);
+            }
+
+            applySessionStates();
+            updateTotalDisplay();
+
+            // Cek apakah ada sesi pendaftaran aktif yang tersimpan di tab ini (agar saat keluar/refresh saat bayar tidak hilang)
+            let resumed = false;
+            try {
+                const saved = sessionStorage.getItem('scrim_active_session');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    // Berlaku jika belum lewat dari 2 jam
+                    if (Date.now() - (parsed.savedAt || 0) < 2 * 3600 * 1000 && parsed.state && parsed.state.transactionId) {
+                        state = parsed.state;
+                        if (parsed.step === 2 && !state.isPaid) {
+                            transactionIdDisplay.textContent = state.transactionId;
+                            paymentAmountDisplay.textContent = `Rp ${state.finalAmount.toLocaleString('id-ID')}`;
+                            resetPaymentStatusUI();
+                            renderPureQRCode(state.finalAmount);
+                            showStep(2);
+                            updateStepIndicator(2);
+                            startPollingStatus();
+
+                            // Hitung sisa waktu 5 menit (300 detik)
+                            const elapsedSec = Math.floor((Date.now() - (parsed.savedAt || Date.now())) / 1000);
+                            const rem = Math.max(0, 300 - elapsedSec);
+                            if (rem > 0) {
+                                startPaymentTimer(rem);
+                            } else {
+                                onPaymentExpired();
+                            }
+                            resumed = true;
+                        } else if (parsed.step === 3 || state.isPaid) {
+                            updateStep3Data();
+                            renderStep3GroupLinks();
+                            showStep(3);
+                            updateStepIndicator(3);
+                            resumed = true;
+                        }
+                    } else {
+                        clearActiveSession();
+                    }
+                }
+            } catch(e) {}
+
+            if (!resumed) {
+                showStep(1);
+                updateStepIndicator(1);
+            }
+
+            // Easter Egg: Klik logo Papih Gaming 5x untuk membuka Admin Panel
+            let logoClicks = 0;
+            let logoTimer = null;
+            const brandLogo = document.getElementById('brandLogo');
+            if (brandLogo) {
+                brandLogo.addEventListener('click', () => {
+                    logoClicks++;
+                    clearTimeout(logoTimer);
+                    if (logoClicks >= 5) {
+                        logoClicks = 0;
+                        window.location.href = 'admin.html';
+                    } else {
+                        logoTimer = setTimeout(() => { logoClicks = 0; }, 2500);
+                    }
+                });
+            }
+
+            // Realtime Sync dari Firebase RTDB
+            if (rtdb) {
+                rtdb.ref('scrim_sessions').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        const hidden = data.hidden || [];
+                        const full = data.full || [];
+                        groupLinksMap = data.groupLinks || {};
+                        localStorage.setItem('hiddenSessions', JSON.stringify(hidden));
+                        localStorage.setItem('fullSessions', JSON.stringify(full));
+                        localStorage.setItem('scrimGroupLinks', JSON.stringify(groupLinksMap));
+
+                        if (data.adminWhatsapp) {
+                            WA_ADMIN_NUMBER = String(data.adminWhatsapp).replace(/[^0-9]/g, '');
+                            localStorage.setItem('scrimAdminWa', WA_ADMIN_NUMBER);
+                            const btnExp = document.getElementById('btnExpiredWaLink');
+                            if (btnExp) {
+                                btnExp.href = `https://wa.me/${WA_ADMIN_NUMBER}`;
+                            }
+                        }
+
+                        if (data.waTemplates) {
+                            currentWaTemplates = {
+                                overbook: data.waTemplates.overbook || DEFAULT_WA_TEMPLATES.overbook,
+                                expired: data.waTemplates.expired || DEFAULT_WA_TEMPLATES.expired
+                            };
+                            localStorage.setItem('scrimWaTemplates', JSON.stringify(currentWaTemplates));
+                        }
+
+                        applyGlobalFullSlot(data.globalFullSlot === true);
+                        applySessionStates(hidden, full);
+                    }
+                }, (err) => {
+                    console.warn('Realtime sync warning:', err);
+                });
+            }
+        });
+
+        // ==================== SILENT SECURITY & ANTI-INSPECT ====================
+        // 1. Matikan Klik Kanan (Diam-diam dinonaktifkan, tanpa pesan)
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        // 2. Matikan Shortcut: F12, Ctrl+U, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+S
+        document.addEventListener('keydown', function(e) {
+            // F12
+            if (e.keyCode === 123) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            // Ctrl/Cmd + U (View Source)
+            if ((e.ctrlKey || e.metaKey) && e.keyCode === 85) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            // Ctrl/Cmd + S (Save Page)
+            if ((e.ctrlKey || e.metaKey) && e.keyCode === 83) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            // Ctrl/Cmd + Shift + I / J / C (Inspect Element & Console)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        });
+
+        // 3. Matikan Drag Gambar
+        document.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+            return false;
+        });
+    </script>
+</body>
+</html>
