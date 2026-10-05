@@ -3141,12 +3141,64 @@
             updateStep3Data();
             renderStep3GroupLinks();
 
-            // 6. Transisi otomatis ke Step 3 setelah animasi sukses dinikmati (1.8 detik)
+            // 6. Otomatis tutup sesi ini untuk publik jika sudah mencapai kuota / overbook
+            try {
+                if (state.selectedSessions && state.selectedSessions.length > 0) {
+                    state.selectedSessions.forEach(s => {
+                        const alloc = getSessionAllocation(s.time, s.type);
+                        const key = `${s.time}_${s.type}`.replace('.', '_');
+                        const linkC2 = (groupLinksMap && groupLinksMap[`${key}_c2`]) || '';
+                        const mode = (groupLinksMap && groupLinksMap[`mode_${key}`]) || 'auto';
+                        const hasC2 = (mode === 'c2') || (mode === 'auto' && !!linkC2);
+                        const maxCapacity = hasC2 ? 30 : 15;
+
+                        if (alloc.isOverbook || (alloc.rank && alloc.rank >= maxCapacity)) {
+                            autoMarkSessionFull(s.time, s.type);
+                        }
+                    });
+                }
+            } catch (err) {
+                console.warn('Auto mark full error:', err);
+            }
+
+            // 7. Transisi otomatis ke Step 3 setelah animasi sukses dinikmati (1.8 detik)
             setTimeout(() => {
                 showStep(3);
                 updateStepIndicator(3);
                 saveActiveSession(3);
             }, 1800);
+        }
+
+        // ==================== AUTO-MARK SESI PENUH (FULL) ====================
+        function autoMarkSessionFull(time, type) {
+            try {
+                // 1. Simpan ke localStorage agar formulir lokal langsung terkunci
+                let full = JSON.parse(localStorage.getItem('fullSessions') || '[]');
+                if (!full.some(f => f.time === time && f.type === type)) {
+                    full.push({ time, type });
+                    localStorage.setItem('fullSessions', JSON.stringify(full));
+                }
+
+                // 2. Perbarui tampilan tombol sesi seketika di formulir
+                applySessionStates();
+
+                // 3. Sinkronkan secara otomatis ke Firebase Realtime Database
+                // Agar SELURUH pengunjung lain di internet dan Admin Panel langsung melihat sesi ini FULL secara realtime
+                if (rtdb) {
+                    rtdb.ref('scrim_sessions/full').once('value').then(snapshot => {
+                        let remoteFull = snapshot.val() || [];
+                        if (!Array.isArray(remoteFull)) remoteFull = [];
+                        if (!remoteFull.some(f => f.time === time && f.type === type)) {
+                            remoteFull.push({ time, type });
+                            rtdb.ref('scrim_sessions/full').set(remoteFull);
+                        }
+                    }).catch(err => {
+                        console.warn('Auto mark full error:', err);
+                    });
+                }
+            } catch (err) {
+                console.warn('Auto lock session error:', err);
+            }
         }
 
         // ==================== ALOKASI SESI C1 / C2 & DETEKSI OVERBOOK ====================
