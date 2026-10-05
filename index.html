@@ -1316,7 +1316,8 @@
         .logo-box-left img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+            background: rgba(0, 0, 0, 0.25);
             border-radius: 5px;
         }
         .logo-box-center {
@@ -1636,7 +1637,7 @@
 
                     <div class="form-group" style="margin-bottom:0;">
                         <label id="lblTeamLogo">Logo Tim <span class="required">*</span></label>
-                        <div class="logo-upload-card" id="logoUploadCard" onclick="triggerLogoFileInput()">
+                        <div class="logo-upload-card" id="logoUploadCard" onclick="triggerLogoFileInput(event)">
                             <div class="logo-box-left" id="logoBoxLeft">
                                 <svg class="logo-icon-svg" id="logoIconSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
@@ -1647,14 +1648,14 @@
                             </div>
                             <div class="logo-box-center">
                                 <div class="logo-box-title" id="logoTitleText">Upload Logo Tim</div>
-                                <div class="logo-box-sub" id="logoSubText">Format PNG/JPG (Maks 5 MB) - Tampil HD di data</div>
+                                <div class="logo-box-sub" id="logoSubText">PNG, JPG, Screenshot HP (Maks 5 MB) - Tampil HD</div>
                             </div>
                             <div class="logo-box-right">
-                                <button type="button" class="btn-pilih-logo" id="btnPilihLogo" onclick="triggerLogoFileInput()">Pilih</button>
+                                <button type="button" class="btn-pilih-logo" id="btnPilihLogo" onclick="event.stopPropagation(); triggerLogoFileInput(event);">Pilih</button>
                                 <button type="button" class="btn-remove-logo-inline" id="btnRemoveLogoInline" onclick="event.stopPropagation(); removeSelectedLogo();" style="display:none;" title="Hapus Logo">✕</button>
                             </div>
                         </div>
-                        <input type="file" id="teamLogoInput" accept="image/*" style="display:none;" onchange="handleLogoFileSelect(event)" />
+                        <input type="file" id="teamLogoInput" accept="image/*,.png,.jpg,.jpeg,.webp" style="display:none;" onchange="handleLogoFileSelect(event)" />
                         <div class="error-message" id="teamLogoError">Logo tim wajib diunggah!</div>
                     </div>
                 </div>
@@ -2112,7 +2113,7 @@
                 errTeamName: 'Wajib diisi!',
                 labelTeamLogo: 'Logo Tim',
                 logoUploadTitle: 'Upload Logo Tim',
-                logoUploadSub: 'Format PNG/JPG (Maks 5 MB) - Tampil HD di data',
+                logoUploadSub: 'PNG, JPG, Screenshot HP (Maks 5 MB) - Tampil HD',
                 logoBtnSelect: 'Pilih',
                 logoBtnChange: 'Ganti',
                 errTeamLogo: 'Logo tim wajib diunggah!',
@@ -2164,7 +2165,7 @@
                 errTeamName: 'Required field!',
                 labelTeamLogo: 'Team Logo',
                 logoUploadTitle: 'Upload Team Logo',
-                logoUploadSub: 'PNG/JPG format (Max 5 MB) - Displays HD in data',
+                logoUploadSub: 'PNG, JPG, Phone Screenshots (Max 5 MB) - HD',
                 logoBtnSelect: 'Choose',
                 logoBtnChange: 'Change',
                 errTeamLogo: 'Team logo is required!',
@@ -2216,7 +2217,7 @@
                 errTeamName: 'Campo obrigatório!',
                 labelTeamLogo: 'Logo do Time',
                 logoUploadTitle: 'Enviar Logo do Time',
-                logoUploadSub: 'Formato PNG/JPG (Máx 5 MB) - Exibe HD',
+                logoUploadSub: 'Formato PNG/JPG/Print (Máx 5 MB) - Exibe HD',
                 logoBtnSelect: 'Escolher',
                 logoBtnChange: 'Trocar',
                 errTeamLogo: 'O logotipo do time é obrigatório!',
@@ -2268,7 +2269,7 @@
                 errTeamName: 'จำเป็นต้องกรอก!',
                 labelTeamLogo: 'โลโก้ทีม',
                 logoUploadTitle: 'อัปโหลดโลโก้ทีม',
-                logoUploadSub: 'ไฟล์ PNG/JPG (สูงสุด 5 MB) - คมชัด HD',
+                logoUploadSub: 'ไฟล์ PNG/JPG/แคปหน้าจอ (สูงสุด 5 MB) - คมชัด HD',
                 logoBtnSelect: 'เลือก',
                 logoBtnChange: 'เปลี่ยน',
                 errTeamLogo: 'กรุณาอัปโหลดโลโก้ทีม!',
@@ -2320,7 +2321,7 @@
                 errTeamName: 'Bắt buộc điền!',
                 labelTeamLogo: 'Logo Đội',
                 logoUploadTitle: 'Tải Logo Đội',
-                logoUploadSub: 'Định dạng PNG/JPG (Tối đa 5 MB) - Hiển thị HD',
+                logoUploadSub: 'Định dạng PNG/JPG/Ảnh màn hình (Tối đa 5 MB) - Hiển thị HD',
                 logoBtnSelect: 'Chọn',
                 logoBtnChange: 'Đổi',
                 errTeamLogo: 'Vui lòng tải lên logo đội!',
@@ -2372,7 +2373,7 @@
                 errTeamName: '¡Campo obligatorio!',
                 labelTeamLogo: 'Logo del Equipo',
                 logoUploadTitle: 'Subir Logo del Equipo',
-                logoUploadSub: 'Formato PNG/JPG (Máx 5 MB) - Calidad HD',
+                logoUploadSub: 'Formato PNG/JPG/Captura (Máx 5 MB) - Calidad HD',
                 logoBtnSelect: 'Elegir',
                 logoBtnChange: 'Cambiar',
                 errTeamLogo: '¡El logo del equipo es obligatorio!',
@@ -2424,7 +2425,7 @@
                 errTeamName: 'هذا الحقل إلزامي!',
                 labelTeamLogo: 'شعار الفريق',
                 logoUploadTitle: 'رفع شعار الفريق',
-                logoUploadSub: 'صيغة PNG/JPG (بحد أقصى 5 ميجابايت) - دقة عالية',
+                logoUploadSub: 'صيغة PNG/JPG/لقطة شاشة (بحد أقصى 5 ميجابايت) - دقة عالية',
                 logoBtnSelect: 'اختيار',
                 logoBtnChange: 'تغيير',
                 errTeamLogo: 'شعار الفريق مطلوب!',
@@ -2757,46 +2758,100 @@
             return `SCRIM-${Math.floor(1000 + Math.random() * 9000)}`;
         }
 
-        // ==================== LOGO TIM UPLOAD HANDLERS ====================
-        function triggerLogoFileInput() {
+        // ==================== LOGO TIM UPLOAD HANDLERS (OPTIMASI KHUSUS HP & SCREENSHOT) ====================
+        let lastLogoTriggerTime = 0;
+        function triggerLogoFileInput(e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            const now = Date.now();
+            if (now - lastLogoTriggerTime < 450) return; // Mencegah double tap di layar sentuh HP
+            lastLogoTriggerTime = now;
+
             const inp = document.getElementById('teamLogoInput');
-            if (inp) inp.click();
+            if (inp) {
+                // Selalu reset value agar memilih screenshot / foto yang sama di HP tetap memicu event onchange
+                inp.value = '';
+                inp.click();
+            }
         }
 
         function handleLogoFileSelect(e) {
             const file = e.target.files && e.target.files[0];
             if (!file) return;
 
+            const logoCard = document.getElementById('logoUploadCard');
+            const logoErr = document.getElementById('teamLogoError');
+
+            // 1. CEK BATAS MAKSIMAL 5 MB
             if (file.size > 5 * 1024 * 1024) {
-                alert("Ukuran file logo maksimal 5MB!");
-                e.target.value = "";
+                // Reset input & data logo
+                state.teamLogo = '';
+                e.target.value = '';
+
+                // Efek getar tipis (field-shake) & kolom merah di kolom logo tim
+                if (logoCard) {
+                    logoCard.classList.remove('field-shake');
+                    void logoCard.offsetWidth; // trigger reflow animasi getar
+                    logoCard.classList.add('error');
+                    logoCard.classList.add('field-shake');
+                    setTimeout(() => {
+                        logoCard.classList.remove('field-shake');
+                    }, 800);
+                }
+
+                // Teks merah tertulis di bawah kolom logo tim
+                if (logoErr) {
+                    logoErr.textContent = 'Ukuran logo melebihi 5 MB!';
+                    logoErr.classList.add('show');
+                }
+
+                showToast('⚠️ Ukuran logo melebihi 5 MB!', 'error');
                 return;
             }
 
+            // Jika ukuran valid (<= 5 MB), bersihkan status error
+            if (logoCard) {
+                logoCard.classList.remove('error');
+                logoCard.classList.remove('field-shake');
+            }
+            if (logoErr) {
+                logoErr.classList.remove('show');
+                const curLang = currentLanguage || 'id';
+                logoErr.textContent = (TRANSLATIONS[curLang] && TRANSLATIONS[curLang].errTeamLogo) || 'Logo tim wajib diunggah!';
+            }
+
+            const titleText = document.getElementById('logoTitleText');
+            const subText = document.getElementById('logoSubText');
+            if (titleText) titleText.textContent = 'Memuat Foto...';
+            if (subText) subText.textContent = 'Memproses file...';
+
+            // Membaca file secara langsung via FileReader (100% kompatibel untuk screenshot PNG maupun JPG HP)
             const reader = new FileReader();
             reader.onload = function(evt) {
-                const raw = evt.target.result;
-                // Pertahankan 100% Kualitas Asli (HD / Original) tanpa kompresi burik
-                state.teamLogo = raw;
+                const rawDataUrl = evt.target.result;
+                if (!rawDataUrl) return;
+
+                // Simpan Base64 ke state formulir
+                state.teamLogo = rawDataUrl;
+
                 const previewThumb = document.getElementById('logoPreviewThumbnail');
                 const iconSvg = document.getElementById('logoIconSvg');
-                const titleText = document.getElementById('logoTitleText');
-                const subText = document.getElementById('logoSubText');
                 const btnPilih = document.getElementById('btnPilihLogo');
                 const btnRemove = document.getElementById('btnRemoveLogoInline');
-                const logoCard = document.getElementById('logoUploadCard');
-                const logoErr = document.getElementById('teamLogoError');
 
                 if (previewThumb) {
-                    previewThumb.src = raw;
+                    previewThumb.src = rawDataUrl;
                     previewThumb.style.display = 'block';
                 }
                 if (iconSvg) iconSvg.style.display = 'none';
+
                 if (titleText) {
                     titleText.textContent = file.name || 'Logo Tim Terpilih ✓';
                     titleText.style.color = 'var(--success)';
                 }
-                if (subText) subText.textContent = 'Kualitas Asli HD (Jernih & Tajam) ✓';
+                if (subText) {
+                    const sizeKb = Math.round(file.size / 1024);
+                    subText.textContent = `Tersimpan (${sizeKb} KB) - Tampil HD ✓`;
+                }
                 if (btnPilih) {
                     const curLang = currentLanguage || 'id';
                     btnPilih.textContent = (TRANSLATIONS[curLang] && TRANSLATIONS[curLang].logoBtnChange) || 'Ganti';
@@ -2805,6 +2860,22 @@
                 if (logoCard) logoCard.classList.remove('error');
                 if (logoErr) logoErr.classList.remove('show');
             };
+
+            reader.onerror = function(err) {
+                console.error("FileReader error:", err);
+                if (logoCard) {
+                    logoCard.classList.add('error');
+                    logoCard.classList.add('field-shake');
+                    setTimeout(() => { logoCard.classList.remove('field-shake'); }, 800);
+                }
+                if (logoErr) {
+                    logoErr.textContent = 'Gagal membaca file gambar! Silakan coba lagi.';
+                    logoErr.classList.add('show');
+                }
+                showToast('⚠️ Gagal membaca file screenshot! Silakan coba lagi.', 'error');
+                removeSelectedLogo();
+            };
+
             reader.readAsDataURL(file);
         }
 
@@ -2818,7 +2889,9 @@
             const subText = document.getElementById('logoSubText');
             const btnPilih = document.getElementById('btnPilihLogo');
             const btnRemove = document.getElementById('btnRemoveLogoInline');
-            
+            const logoCard = document.getElementById('logoUploadCard');
+            const logoErr = document.getElementById('teamLogoError');
+
             if (previewThumb) {
                 previewThumb.src = '';
                 previewThumb.style.display = 'none';
@@ -2831,33 +2904,15 @@
             }
             if (subText) {
                 const curLang = currentLanguage || 'id';
-                subText.textContent = (TRANSLATIONS[curLang] && TRANSLATIONS[curLang].logoUploadSub) || 'Format PNG/JPG (Maks 5 MB) - Tampil HD di data';
+                subText.textContent = (TRANSLATIONS[curLang] && TRANSLATIONS[curLang].logoUploadSub) || 'PNG, JPG, Screenshot HP (Maks 5 MB) - Tampil HD';
             }
             if (btnPilih) {
                 const curLang = currentLanguage || 'id';
                 btnPilih.textContent = (TRANSLATIONS[curLang] && TRANSLATIONS[curLang].logoBtnSelect) || 'Pilih';
             }
             if (btnRemove) btnRemove.style.display = 'none';
-        }
-
-        function compressImage(src, maxWidth, maxHeight, quality, callback) {
-            const img = new Image();
-            img.onload = function() {
-                let w = img.width;
-                let h = img.height;
-                if (w > h) {
-                    if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
-                } else {
-                    if (h > maxHeight) { w = Math.round((w * maxHeight) / h); h = maxHeight; }
-                }
-                const canvas = document.createElement('canvas');
-                canvas.width = w;
-                canvas.height = h;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, w, h);
-                callback(canvas.toDataURL('image/png', quality));
-            };
-            img.src = src;
+            if (logoCard) logoCard.classList.remove('error');
+            if (logoErr) logoErr.classList.remove('show');
         }
 
         // ==================== PROSES LANJUT KE PEMBAYARAN (ANTI-SPAM) ====================
