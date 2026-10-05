@@ -3121,6 +3121,10 @@
             if (waitingWrapper) {
                 waitingWrapper.style.display = 'none';
             }
+            const timerWrapper = document.getElementById('paymentTimerWrapper');
+            if (timerWrapper) {
+                timerWrapper.style.display = 'none';
+            }
 
             // 4. Efek Transisi Mulus (QRIS fade out -> Muncul Fintech Success Card)
             if (qrisCanvasFrame) {
@@ -3188,6 +3192,11 @@
             return { isOverbook, pot, link, rank };
         }
 
+        function getLinkForSession(time, type) {
+            const alloc = getSessionAllocation(time, type);
+            return alloc.link || `https://wa.me/${WA_ADMIN_NUMBER}`;
+        }
+
         // ==================== RENDER LINK GRUP DI STEP 3 ====================
         function renderStep3GroupLinks() {
             const s3Container = document.getElementById('step3GroupSection');
@@ -3212,9 +3221,11 @@
                     });
                     const waUrl = `https://wa.me/${WA_ADMIN_NUMBER}?text=${encodeURIComponent(waText)}`;
 
+                    const card = document.createElement('div');
+                    card.className = 'overbook-card';
                     card.innerHTML = `
                         <div class="overbook-badge">⚠️ OVERBOOK (ANTREAN #${alloc.rank})</div>
-                        <div class="overbook-title">PEMBAYARAN BERHASIL NAMUN UDAH FULL SLOT. KONFIRMASI KE ADMIN UNTUK REFFUND.</div>
+                        <div class="overbook-title">PEMBAYARAN BERHASIL NAMUN UDAH FULL SLOT. KONFIRMASI KE ADMIN UNTUK REFUND.</div>
                         <div class="overbook-desc">
                             Slot 15 tim untuk Sesi <strong>${s.time} WIB</strong> baru saja terpenuhi beberapa detik sebelum transaksi selesai. Dana Anda aman 100%. Silakan hubungi Admin kami untuk konfirmasi pengembalian dana (refund) atau pengalihan ke jadwal sesi lainnya.
                         </div>
