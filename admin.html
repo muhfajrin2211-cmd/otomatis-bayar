@@ -500,6 +500,15 @@
             text-decoration: none; transition: all 0.15s;
         }
         .btn-test-link:hover { color: var(--text); background: var(--surface-2); }
+        .btn-quick-save {
+            height: 34px; padding: 0 16px; border-radius: var(--radius);
+            background: linear-gradient(135deg, #00f076 0%, #00b355 100%);
+            color: #061c10; border: none; font: inherit; font-size: 0.82rem; font-weight: 700;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+            box-shadow: 0 4px 14px rgba(0, 240, 118, 0.3); transition: all 0.15s;
+        }
+        .btn-quick-save:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0, 240, 118, 0.45); }
+        .btn-quick-save:active { transform: scale(0.98); }
 
         /* ==================== TAB 3: MONITOR ==================== */
         .monitor-filter-wrapper {
@@ -880,6 +889,11 @@
                                         </h2>
                                         <div class="sec-desc">Peserta berstatus lunas otomatis menerima tombol link grup sesuai jam sesi yang dipilih.</div>
                                     </div>
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        <button type="button" class="btn-quick-save" onclick="saveToDatabase()" title="Simpan perubahan link ke database">
+                                            💾 Simpan Perubahan
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div class="bulk-apply-box">
@@ -1231,6 +1245,8 @@
         let currentHidden = [];
         let currentFull = [];
         let currentGroupLinks = {};
+        const DEFAULT_C2_SESSIONS = ['13_00_daily', '14_00_daily', '15_00_daily', '16_00_daily', '23_00_daily'];
+        let activeC2Keys = new Set(DEFAULT_C2_SESSIONS);
         let isGlobalFullSlot = false;
         let currentAdminWa = '6285166235006';
         const DEFAULT_WA_TEMPLATES = {
@@ -1330,6 +1346,31 @@
                     currentFull = data.full || [];
                     currentGroupLinks = data.groupLinks || {};
                     isGlobalFullSlot = !!data.globalFullSlot;
+
+                    // Sinkronisasi activeC2Keys dari database secara akurat
+                    if (data.c2Initialized) {
+                        activeC2Keys = new Set(Array.isArray(data.activeC2) ? data.activeC2 : []);
+                    } else if (Array.isArray(data.activeC2)) {
+                        activeC2Keys = new Set(data.activeC2);
+                    } else {
+                        // Inisialisasi awal jika belum ada flag c2Initialized di database
+                        const existingC2 = Object.keys(currentGroupLinks)
+                            .filter(k => k.endsWith('_c2') && currentGroupLinks[k])
+                            .map(k => k.replace(/_c2$/, ''));
+                        activeC2Keys = new Set(existingC2.length ? existingC2 : DEFAULT_C2_SESSIONS);
+                    }
+
+                    // Bersihkan sisa link C2 untuk sesi yang TIDAK ada di activeC2Keys
+                    Object.keys(currentGroupLinks).forEach(k => {
+                        if (k.endsWith('_c2')) {
+                            const baseKey = k.replace(/_c2$/, '');
+                            if (!activeC2Keys.has(baseKey)) {
+                                delete currentGroupLinks[k];
+                                delete currentGroupLinks[`mode_${baseKey}`];
+                            }
+                        }
+                    });
+
                     if (data.adminWhatsapp) {
                         currentAdminWa = cleanWaNumber(data.adminWhatsapp);
                     }
@@ -1353,12 +1394,14 @@
 
                     updateAdminWaDisplay(currentAdminWa);
                     updateGlobalFullSlotButton();
+                    updateSyncStatus('Terhubung realtime ke Firebase — data terbaru tersinkron', 'synced');
                 }
                 renderSessionGrid();
                 renderGroupLinksTab();
                 updateStats();
             }, (err) => {
                 console.warn('Realtime sync warning:', err);
+                updateSyncStatus('Peringatan: Gagal terhubung ke database', 'error');
             });
         }
 
@@ -1435,100 +1478,200 @@
             document.getElementById('statHidden').textContent = hiddenCount;
         }
 
-        const DEFAULT_C2_SESSIONS = ['13_00_daily', '14_00_daily', '15_00_daily', '16_00_daily', '23_00_daily'];
-        let activeC2Keys = new Set(DEFAULT_C2_SESSIONS);
-
         // ==================== TAB 2: RENDER KELOLA LINK GRUP ====================
+        function buildGroupCardHtml(s, key, currentLinkC1, currentLinkC2, mode, hasC2) {
+            const typeLabel = s.type === 'daily' ? 'DAILY' : 'NIGHT';
+            return `
+                <div class="group-link-card-header">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span class="session-time-num">${s.time}</span>
+                        <span class="tag-pill ${s.type}">${typeLabel}</span>
+                        <span class="session-sub-price">Sesi ${s.time} WIB</span>
+                    </div>
+                    <div class="c2-controls">
+                        ${hasC2 ? `
+                            <span class="badge-c2-active">Pot C2 aktif</span>
+                            <select class="c2-mode-select" id="mode_${key}" onchange="onModeChange('${key}', this.value)" title="Pilih Alur Pot C1 / C2">
+                                <option value="auto" ${mode === 'auto' ? 'selected' : ''}>Auto (C1 &rarr; C2 jika >15 tim)</option>
+                                <option value="c1" ${mode === 'c1' ? 'selected' : ''}>Paksa C1</option>
+                                <option value="c2" ${mode === 'c2' ? 'selected' : ''}>Paksa C2</option>
+                            </select>
+                        ` : `
+                            <button type="button" class="btn-enable-c2" onclick="toggleC2('${key}')">+ Buka Pot C2</button>
+                        `}
+                    </div>
+                </div>
+
+                <!-- INPUT C1 (UTAMA) -->
+                <div class="group-input-line">
+                    <span class="input-line-tag c1">C1</span>
+                    <input type="url" 
+                           class="group-link-input" 
+                           id="link_${key}" 
+                           placeholder="https://chat.whatsapp.com/... (Grup Utama)" 
+                           value="${escapeHtml(currentLinkC1)}"
+                           oninput="onLinkInputChange('${key}', this.value)"
+                           onchange="onLinkInputChange('${key}', this.value)" />
+                    <button type="button" class="btn-test-link" onclick="testGroupLink('${key}')" title="Test buka link C1">
+                        Test link
+                    </button>
+                </div>
+
+                <!-- INPUT C2 (JIKA DIAKTIFKAN) -->
+                ${hasC2 ? `
+                <div class="group-input-line c2-line" id="c2Line_${key}">
+                    <span class="input-line-tag c2">C2</span>
+                    <input type="url" 
+                           class="group-link-input" 
+                           id="link_${key}_c2" 
+                           placeholder="https://chat.whatsapp.com/... (Grup Pot C2)" 
+                           value="${escapeHtml(currentLinkC2)}"
+                           oninput="onLinkInputChange('${key}_c2', this.value)"
+                           onchange="onLinkInputChange('${key}_c2', this.value)" />
+                    <button type="button" class="btn-test-link" onclick="testGroupLink('${key}_c2')" title="Test buka link C2">
+                        Test link
+                    </button>
+                    <button type="button" class="btn-close-c2" onclick="toggleC2('${key}')" title="Matikan Pot C2 dan hapus link C2">✕</button>
+                </div>
+                ` : ''}
+            `;
+        }
+
         function renderGroupLinksTab() {
             const container = document.getElementById('groupLinkCardList');
-            container.innerHTML = '';
+            if (!container) return;
 
             MASTER_SESSIONS.forEach((s) => {
                 const key = getSessionKey(s.time, s.type);
                 const currentLinkC1 = currentGroupLinks[key] || '';
                 const currentLinkC2 = currentGroupLinks[`${key}_c2`] || '';
                 const mode = currentGroupLinks[`mode_${key}`] || 'auto';
-                const typeLabel = s.type === 'daily' ? 'DAILY' : 'NIGHT';
+                const hasC2 = activeC2Keys.has(key);
+                const hasC2Str = hasC2 ? '1' : '0';
 
-                // C2 aktif jika ada di default, ada isinya, atau dibuka manual
-                const hasC2 = activeC2Keys.has(key) || !!currentLinkC2;
+                let card = document.getElementById(`groupCard_${key}`);
 
-                const card = document.createElement('div');
-                card.className = 'group-link-card';
-                card.innerHTML = `
-                    <div class="group-link-card-header">
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <span class="session-time-num">${s.time}</span>
-                            <span class="tag-pill ${s.type}">${typeLabel}</span>
-                            <span class="session-sub-price">Sesi ${s.time} WIB</span>
-                        </div>
-                        <div class="c2-controls">
-                            ${hasC2 ? `
-                                <span class="badge-c2-active">Pot C2 aktif</span>
-                                <select class="c2-mode-select" onchange="onModeChange('${key}', this.value)" title="Pilih Alur Pot C1 / C2">
-                                    <option value="auto" ${mode === 'auto' ? 'selected' : ''}>Auto (C1 &rarr; C2 jika >15 tim)</option>
-                                    <option value="c1" ${mode === 'c1' ? 'selected' : ''}>Paksa C1</option>
-                                    <option value="c2" ${mode === 'c2' ? 'selected' : ''}>Paksa C2</option>
-                                </select>
-                            ` : `
-                                <button type="button" class="btn-enable-c2" onclick="toggleC2('${key}')">+ Buka Pot C2</button>
-                            `}
-                        </div>
-                    </div>
-
-                    <!-- INPUT C1 (UTAMA) -->
-                    <div class="group-input-line">
-                        <span class="input-line-tag c1">C1</span>
-                        <input type="url" 
-                               class="group-link-input" 
-                               id="link_${key}" 
-                               placeholder="https://chat.whatsapp.com/... (Grup Utama)" 
-                               value="${escapeHtml(currentLinkC1)}"
-                               onchange="onLinkInputChange('${key}', this.value)" />
-                        <button type="button" class="btn-test-link" onclick="testGroupLink('${key}')" title="Test buka link C1">
-                            Test link
-                        </button>
-                    </div>
-
-                    <!-- INPUT C2 (JIKA DIAKTIFKAN) -->
-                    ${hasC2 ? `
-                    <div class="group-input-line c2-line">
-                        <span class="input-line-tag c2">C2</span>
-                        <input type="url" 
-                               class="group-link-input" 
-                               id="link_${key}_c2" 
-                               placeholder="https://chat.whatsapp.com/... (Grup Pot C2)" 
-                               value="${escapeHtml(currentLinkC2)}"
-                               onchange="onLinkInputChange('${key}_c2', this.value)" />
-                        <button type="button" class="btn-test-link" onclick="testGroupLink('${key}_c2')" title="Test buka link C2">
-                            Test link
-                        </button>
-                        <button type="button" class="btn-close-c2" onclick="toggleC2('${key}')" title="Tutup / Sembunyikan Pot C2">✕</button>
-                    </div>
-                    ` : ''}
-                `;
-                container.appendChild(card);
+                if (!card) {
+                    card = document.createElement('div');
+                    card.id = `groupCard_${key}`;
+                    card.className = 'group-link-card';
+                    card.dataset.hasC2 = hasC2Str;
+                    card.innerHTML = buildGroupCardHtml(s, key, currentLinkC1, currentLinkC2, mode, hasC2);
+                    container.appendChild(card);
+                } else {
+                    if (card.dataset.hasC2 !== hasC2Str) {
+                        card.dataset.hasC2 = hasC2Str;
+                        card.innerHTML = buildGroupCardHtml(s, key, currentLinkC1, currentLinkC2, mode, hasC2);
+                    } else {
+                        const inputC1 = document.getElementById(`link_${key}`);
+                        if (inputC1 && document.activeElement !== inputC1 && inputC1.value !== currentLinkC1) {
+                            inputC1.value = currentLinkC1;
+                        }
+                        if (hasC2) {
+                            const inputC2 = document.getElementById(`link_${key}_c2`);
+                            if (inputC2 && document.activeElement !== inputC2 && inputC2.value !== currentLinkC2) {
+                                inputC2.value = currentLinkC2;
+                            }
+                            const selMode = document.getElementById(`mode_${key}`);
+                            if (selMode && document.activeElement !== selMode && selMode.value !== mode) {
+                                selMode.value = mode;
+                            }
+                        }
+                    }
+                }
             });
         }
 
         function toggleC2(key) {
             if (activeC2Keys.has(key)) {
-                if (confirm('Tutup Pot C2 untuk sesi ini? Link C2 yang sudah ada akan disimpan namun disembunyikan.')) {
-                    activeC2Keys.delete(key);
-                    renderGroupLinksTab();
-                }
+                activeC2Keys.delete(key);
+                delete currentGroupLinks[`${key}_c2`];
+                delete currentGroupLinks[`mode_${key}`];
+                renderGroupLinksTab();
+                autoSyncGroupLinks();
+                showToast('✅ Pot C2 dimatikan & link C2 dihapus.', 'info');
             } else {
                 activeC2Keys.add(key);
+                currentGroupLinks[`mode_${key}`] = 'auto';
                 renderGroupLinksTab();
+                autoSyncGroupLinks();
+                setTimeout(() => {
+                    const input = document.getElementById(`link_${key}_c2`);
+                    if (input) input.focus();
+                }, 50);
+                showToast('✅ Pot C2 dibuka! Silakan masukkan link WhatsApp Pot C2.', 'success');
             }
         }
 
         function onModeChange(key, val) {
-            currentGroupLinks[`mode_${key}`] = val;
+            if (val && val !== 'auto') {
+                currentGroupLinks[`mode_${key}`] = val;
+            } else {
+                delete currentGroupLinks[`mode_${key}`];
+            }
+            autoSyncGroupLinksDebounced();
         }
 
         function onLinkInputChange(key, val) {
-            currentGroupLinks[key] = val.trim();
+            const trimmed = (val || '').trim();
+            if (trimmed) {
+                currentGroupLinks[key] = trimmed;
+            } else {
+                delete currentGroupLinks[key];
+            }
+            autoSyncGroupLinksDebounced();
+        }
+
+        function getCleanGroupLinks() {
+            const cleaned = {};
+            MASTER_SESSIONS.forEach(s => {
+                const key = getSessionKey(s.time, s.type);
+                const c1Val = currentGroupLinks[key];
+                if (c1Val && typeof c1Val === 'string' && c1Val.trim()) {
+                    cleaned[key] = c1Val.trim();
+                }
+                if (activeC2Keys.has(key)) {
+                    const c2Val = currentGroupLinks[`${key}_c2`];
+                    if (c2Val && typeof c2Val === 'string' && c2Val.trim()) {
+                        cleaned[`${key}_c2`] = c2Val.trim();
+                    }
+                    const modeVal = currentGroupLinks[`mode_${key}`];
+                    if (modeVal && modeVal !== 'auto') {
+                        cleaned[`mode_${key}`] = modeVal;
+                    }
+                }
+            });
+            return cleaned;
+        }
+
+        let groupLinksDebounceTimer = null;
+
+        function autoSyncGroupLinksDebounced() {
+            updateSyncStatus('Menyimpan perubahan link...', 'saving');
+            clearTimeout(groupLinksDebounceTimer);
+            groupLinksDebounceTimer = setTimeout(() => {
+                autoSyncGroupLinks();
+            }, 700);
+        }
+
+        function autoSyncGroupLinks() {
+            clearTimeout(groupLinksDebounceTimer);
+            const cleaned = getCleanGroupLinks();
+            currentGroupLinks = cleaned;
+
+            updateSyncStatus('Menyinkronkan link ke Firebase...', 'saving');
+
+            rtdb.ref('scrim_sessions').update({
+                groupLinks: cleaned,
+                activeC2: Array.from(activeC2Keys),
+                c2Initialized: true,
+                updatedAt: new Date().toISOString()
+            }).then(() => {
+                updateSyncStatus('Terhubung realtime ke Firebase — link grup tersimpan', 'synced');
+            }).catch(err => {
+                console.error('Auto sync group links error:', err);
+                updateSyncStatus('Gagal sinkron link: ' + err.message, 'error');
+            });
         }
 
         function testGroupLink(key) {
@@ -1547,7 +1690,7 @@
                 alert('Silakan masukkan URL link WhatsApp terlebih dahulu!');
                 return;
             }
-            if (!confirm(`Terapkan link:\n"${bulkUrl}"\nke SEMUA 19 sesi?`)) {
+            if (!confirm(`Terapkan link:\n"${bulkUrl}"\nke SEMUA 19 sesi (Grup Utama C1)?`)) {
                 return;
             }
 
@@ -1558,7 +1701,8 @@
                 if (input) input.value = bulkUrl;
             });
 
-            showToast('✅ Link berhasil disalin ke semua sesi! Jangan lupa klik Simpan.', 'success');
+            autoSyncGroupLinks();
+            showToast('✅ Link C1 berhasil disalin ke semua 19 sesi dan tersinkron realtime!', 'success');
         }
 
         // ==================== TAB 3: LOAD MONITOR DATA & OMSET ====================
@@ -1761,7 +1905,7 @@
 
                     // Cek apakah ada C2 aktif untuk sesi ini
                     const currentLinkC2 = currentGroupLinks[`${item.key}_c2`];
-                    const hasC2 = activeC2Keys.has(item.key) || !!currentLinkC2;
+                    const hasC2 = activeC2Keys.has(item.key) && !!currentLinkC2;
 
                     let potType = 'c1';
                     if (count <= 15) {
@@ -1789,7 +1933,7 @@
             Object.keys(sessionLunasCounts).forEach(sKey => {
                 const count = sessionLunasCounts[sKey] || 0;
                 const currentLinkC2 = currentGroupLinks[`${sKey}_c2`];
-                const hasC2 = activeC2Keys.has(sKey) || !!currentLinkC2;
+                const hasC2 = activeC2Keys.has(sKey) && !!currentLinkC2;
                 const maxCap = hasC2 ? 30 : 15;
 
                 if (count >= maxCap) {
@@ -2090,6 +2234,24 @@
             }
         }
 
+        function updateSyncStatus(text, status = 'synced') {
+            const el = document.getElementById('syncIndicator');
+            const dot = document.querySelector('#bottomSaveBar .online-dot');
+            if (el) el.textContent = text;
+            if (dot) {
+                if (status === 'saving') {
+                    dot.style.background = '#f59e0b';
+                    dot.style.boxShadow = '0 0 8px #f59e0b';
+                } else if (status === 'error') {
+                    dot.style.background = '#ef4444';
+                    dot.style.boxShadow = '0 0 8px #ef4444';
+                } else {
+                    dot.style.background = '#00f076';
+                    dot.style.boxShadow = '0 0 8px #00f076';
+                }
+            }
+        }
+
         // ==================== SAVE TO DATABASE ====================
         function saveToDatabase() {
             collectCurrentCheckboxes();
@@ -2097,9 +2259,17 @@
             document.querySelectorAll('.group-link-input').forEach(input => {
                 const key = input.id.replace('link_', '');
                 if (key) {
-                    currentGroupLinks[key] = input.value.trim();
+                    const val = input.value.trim();
+                    if (val) {
+                        currentGroupLinks[key] = val;
+                    } else {
+                        delete currentGroupLinks[key];
+                    }
                 }
             });
+
+            // Bersihkan secara ketat dari link C2 yang nonaktif
+            currentGroupLinks = getCleanGroupLinks();
 
             const waInput = document.getElementById('adminWaInput');
             if (waInput && waInput.value.trim()) {
@@ -2114,27 +2284,37 @@
             if (elEx && elEx.value.trim()) currentWaTemplates.expired = elEx.value.trim();
 
             const btn = document.getElementById('btnSaveDb');
-            const origText = btn.textContent;
-            btn.disabled = true;
-            btn.textContent = '⏳ Menyimpan ke Database...';
+            const origText = btn ? btn.textContent : 'Simpan Perubahan';
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '⏳ Menyimpan ke Database...';
+            }
+
+            updateSyncStatus('Menyimpan seluruh perubahan ke Firebase...', 'saving');
 
             rtdb.ref('scrim_sessions').set({
                 hidden: currentHidden,
                 full: currentFull,
                 groupLinks: currentGroupLinks,
+                activeC2: Array.from(activeC2Keys),
+                c2Initialized: true,
                 globalFullSlot: isGlobalFullSlot,
                 adminWhatsapp: currentAdminWa,
                 waTemplates: currentWaTemplates,
                 updatedAt: new Date().toISOString()
             }).then(() => {
-                showToast('✅ Berhasil disimpan! Sesi, Full Slot, Nomor Admin & Kalimat Chat langsung tersinkron.', 'success');
+                showToast('✅ Berhasil disimpan! Sesi, Link Grup, Full Slot & Nomor Admin langsung tersinkron.', 'success');
                 updateAdminWaDisplay(currentAdminWa);
+                updateSyncStatus('Terhubung realtime ke Firebase — semua data tersimpan', 'synced');
             }).catch((err) => {
                 console.error('Firebase save error:', err);
                 showToast('❌ Gagal menyimpan: ' + err.message, 'error');
+                updateSyncStatus('Gagal menyimpan: ' + err.message, 'error');
             }).finally(() => {
-                btn.disabled = false;
-                btn.textContent = origText;
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = origText;
+                }
             });
         }
 
